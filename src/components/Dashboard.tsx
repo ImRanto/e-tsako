@@ -1,11 +1,5 @@
-import React, { useEffect, useState } from "react";
-import {
-  Users,
-  Package,
-  ShoppingCart,
-  DollarSign,
-  AlertTriangle,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { AlertTriangle } from "lucide-react";
 import StatCard from "./StatCard";
 import QuickActions from "./QuickActions";
 
