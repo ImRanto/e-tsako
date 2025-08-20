@@ -28,6 +28,8 @@ const menuItems = [
   { id: "reports", label: "Rapports", icon: BarChart3 },
 ];
 
+const app_name = import.meta.env.VITE_APP_NAME;
+
 export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -51,7 +53,7 @@ export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {
           {/* Logo */}
           <div className="flex items-center justify-center h-20 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
             <Package size={32} className="mr-2" />
-            <h1 className="text-xl font-bold">MadaChips</h1>
+            <h1 className="text-xl font-bold">{app_name}</h1>
           </div>
 
           {/* Navigation */}
@@ -91,7 +93,7 @@ export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {
               </div>
               <div className="ml-3">
                 <p className="font-medium text-gray-900">Admin Principal</p>
-                <p className="text-sm text-gray-500">admin@madachips.com</p>
+                <p className="text-sm text-gray-500">admin@i-tsaky.com</p>
               </div>
             </div>
           </div>

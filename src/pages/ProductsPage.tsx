@@ -98,6 +98,8 @@ export default function ProductsPage() {
     setIsModalOpen(true);
   };
 
+  const app_name = import.meta.env.VITE_APP_NAME;
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -105,7 +107,7 @@ export default function ProductsPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Produits</h1>
           <p className="text-gray-600">
-            Gérez votre catalogue de produits MadaChips
+            Gérez votre catalogue de produits ${app_name}
           </p>
         </div>
         <button

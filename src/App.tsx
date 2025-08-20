@@ -8,9 +8,11 @@ import ExpensesPage from "./pages/ExpensesPage";
 import StockPage from "./pages/StockPage";
 import MarketingPage from "./pages/MarketingPage";
 import ReportsPage from "./pages/ReportsPage";
+import LoginPage from "./pages/LoginPage";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const renderPage = () => {
     switch (currentPage) {
@@ -36,10 +38,16 @@ function App() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar currentPage={currentPage} onPageChange={setCurrentPage} />
-      <main className="flex-1 lg:ml-64">{renderPage()}</main>
-    </div>
+    <>
+      {isAuthenticated ? (
+        <div className="flex min-h-screen bg-gray-50">
+          <Sidebar currentPage={currentPage} onPageChange={setCurrentPage} />
+          <main className="flex-1 lg:ml-64">{renderPage()}</main>
+        </div>
+      ) : (
+        <LoginPage onLogin={() => setIsAuthenticated(true)} />
+      )}
+    </>
   );
 }
 

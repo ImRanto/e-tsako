@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Eye, Edit, Trash2, Package } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Package } from "lucide-react";
 import OrderForm from "../components/OrderForm";
 import Modal from "../components/Modal";
 

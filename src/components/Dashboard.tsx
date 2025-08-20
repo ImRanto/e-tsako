@@ -4,6 +4,7 @@ import StatCard from "./StatCard";
 import QuickActions from "./QuickActions";
 
 const baseUrl = import.meta.env.VITE_API_URL;
+const app_name = import.meta.env.VITE_APP_NAME;
 
 export default function Dashboard() {
   const [stats, setStats] = useState<any[]>([]);
@@ -32,7 +33,7 @@ export default function Dashboard() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
         <p className="text-gray-600">
-          Vue d'ensemble de votre activité MadaChips
+          Vue d'ensemble de votre activité ${app_name}
         </p>
       </div>
 
