@@ -1,5 +1,14 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, TrendingDown, Calendar } from "lucide-react";
+import {
+  Plus,
+  Search,
+  TrendingDown,
+  Calendar,
+  Edit,
+  Trash2,
+} from "lucide-react";
+import Modal from "../components/Modal";
+import ExpenseForm from "../components/ExpensesForm";
 
 interface Expense {
   id: number;
@@ -20,15 +29,22 @@ export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
-  // Récupération des dépenses depuis l’API
-  useEffect(() => {
+  // Fetch des dépenses
+  const fetchExpenses = () => {
     fetch(`${baseUrl}/api/depenses`)
       .then((res) => res.json())
       .then((data: Expense[]) => setExpenses(data))
       .catch((err) => console.error("Erreur fetch dépenses:", err));
+  };
+
+  useEffect(() => {
+    fetchExpenses();
   }, []);
 
+  // Couleur et label pour chaque type de dépense
   const getTypeColor = (type: string) => {
     switch (type) {
       case "MATIERE_PREMIERE":
@@ -59,6 +75,7 @@ export default function ExpensesPage() {
     }
   };
 
+  // Filtrage et total
   const filteredExpenses = expenses.filter((expense) => {
     const matchesSearch =
       expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -74,6 +91,44 @@ export default function ExpensesPage() {
     0
   );
 
+  // Modal et actions CRUD
+  const openCreateModal = () => {
+    setEditingExpense(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (expense: Expense) => {
+    setEditingExpense(expense);
+    setIsModalOpen(true);
+  };
+
+  const handleSave = async (expenseData: Omit<Expense, "id">) => {
+    if (editingExpense) {
+      // Update via PUT
+      await fetch(`${baseUrl}/api/depenses/${editingExpense.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(expenseData),
+      });
+    } else {
+      // Create via POST
+      await fetch(`${baseUrl}/api/depenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(expenseData),
+      });
+    }
+    setIsModalOpen(false);
+    fetchExpenses();
+  };
+
+  const handleDelete = async (id: number) => {
+    if (confirm("Êtes-vous sûr de vouloir supprimer cette dépense ?")) {
+      await fetch(`${baseUrl}/api/depenses/${id}`, { method: "DELETE" });
+      fetchExpenses();
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -82,13 +137,16 @@ export default function ExpensesPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Dépenses</h1>
           <p className="text-gray-600">Suivi des dépenses d'exploitation</p>
         </div>
-        <button className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm">
+        <button
+          onClick={openCreateModal}
+          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm"
+        >
           <Plus size={20} className="mr-2" />
           Nouvelle dépense
         </button>
       </div>
 
-      {/* Summary Card */}
+      {/* Summary */}
       <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-xl shadow-sm p-6 mb-6 text-white">
         <div className="flex items-center justify-between">
           <div>
@@ -134,7 +192,7 @@ export default function ExpensesPage() {
         </div>
       </div>
 
-      {/* Expenses List */}
+      {/* Expenses Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -152,6 +210,9 @@ export default function ExpensesPage() {
                 <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Montant
                 </th>
+                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -160,13 +221,9 @@ export default function ExpensesPage() {
                   key={expense.id}
                   className="hover:bg-gray-50 transition-colors"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div className="flex items-center">
-                      <Calendar size={16} className="text-gray-400 mr-2" />
-                      {new Date(expense.dateDepense).toLocaleDateString(
-                        "fr-FR"
-                      )}
-                    </div>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 flex items-center">
+                    <Calendar size={16} className="text-gray-400 mr-2" />
+                    {new Date(expense.dateDepense).toLocaleDateString("fr-FR")}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
@@ -183,12 +240,39 @@ export default function ExpensesPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-red-600">
                     -{expense.montant.toLocaleString()} Ar
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex gap-2 justify-end">
+                    <button
+                      onClick={() => openEditModal(expense)}
+                      className="bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200"
+                    >
+                      <Edit size={14} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(expense.id)}
+                      className="bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingExpense ? "Modifier la dépense" : "Nouvelle dépense"}
+      >
+        <ExpenseForm
+          expense={editingExpense}
+          onSave={handleSave}
+          onCancel={() => setIsModalOpen(false)}
+        />
+      </Modal>
     </div>
   );
 }

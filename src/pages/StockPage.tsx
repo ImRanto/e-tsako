@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Plus, Search, AlertTriangle, Package } from "lucide-react";
+import Modal from "../components/Modal";
+import StockForm from "../components/StockForm";
 
 interface Stock {
-  id: number;
+  id?: number;
   nomMatiere: string;
   quantite: number;
   unite: string;
@@ -12,20 +14,29 @@ interface Stock {
 const baseUrl = import.meta.env.VITE_API_URL;
 
 export default function StockPage() {
-  const [searchTerm, setSearchTerm] = useState("");
   const [stocks, setStocks] = useState<Stock[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingStock, setEditingStock] = useState<Stock | null>(null);
 
-  // Charger les stocks depuis l'API backend
-  useEffect(() => {
+  // Charger les stocks depuis le backend
+  const fetchStocks = () => {
     fetch(`${baseUrl}/api/stocks`)
       .then((res) => res.json())
       .then((data: Stock[]) => setStocks(data))
       .catch((err) => console.error("Erreur fetch stocks:", err));
+  };
+
+  useEffect(() => {
+    fetchStocks();
   }, []);
 
-  const filteredStocks = stocks.filter((stock) =>
-    stock.nomMatiere.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtrage sécurisé pour éviter undefined
+  const filteredStocks = stocks
+    .filter((stock) => stock.nomMatiere)
+    .filter((stock) =>
+      stock.nomMatiere.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   const lowStockItems = filteredStocks.filter(
     (stock) => stock.quantite <= stock.seuilAlerte
@@ -33,6 +44,65 @@ export default function StockPage() {
   const normalStockItems = filteredStocks.filter(
     (stock) => stock.quantite > stock.seuilAlerte
   );
+
+  // Création ou modification d'un stock
+  const handleSave = async (stockData: Omit<Stock, "id">) => {
+    try {
+      let response: Response;
+      if (editingStock?.id) {
+        response = await fetch(`${baseUrl}/api/stocks/${editingStock.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(stockData),
+        });
+      } else {
+        response = await fetch(`${baseUrl}/api/stocks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(stockData),
+        });
+      }
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(JSON.stringify(errData));
+      }
+
+      // rafraîchir la liste
+      fetchStocks();
+      setIsModalOpen(false);
+      setEditingStock(null);
+    } catch (err) {
+      console.error("Erreur sauvegarde stock:", err);
+      alert("Erreur lors de l'enregistrement du stock. Vérifiez les champs.");
+    }
+  };
+
+  const handleDelete = async (id?: number) => {
+    if (!id) return;
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce stock ?")) return;
+
+    try {
+      const response = await fetch(`${baseUrl}/api/stocks/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Erreur suppression stock");
+      fetchStocks();
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la suppression du stock");
+    }
+  };
+
+  const openEditModal = (stock: Stock) => {
+    setEditingStock(stock);
+    setIsModalOpen(true);
+  };
+
+  const openCreateModal = () => {
+    setEditingStock(null);
+    setIsModalOpen(true);
+  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -46,7 +116,10 @@ export default function StockPage() {
             Suivi des matières premières et fournitures
           </p>
         </div>
-        <button className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm">
+        <button
+          onClick={openCreateModal}
+          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm"
+        >
           <Plus size={20} className="mr-2" />
           Ajouter matière
         </button>
@@ -142,44 +215,38 @@ export default function StockPage() {
                   {stock.seuilAlerte} {stock.unite}
                 </span>
               </div>
-
-              {/* Progress bar */}
-              <div className="w-full">
-                <div className="flex justify-between text-xs text-gray-500 mb-1">
-                  <span>0</span>
-                  <span>
-                    {stock.seuilAlerte * 2} {stock.unite}
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full ${
-                      stock.quantite > stock.seuilAlerte
-                        ? "bg-green-500"
-                        : "bg-red-500"
-                    }`}
-                    style={{
-                      width: `${Math.min(
-                        (stock.quantite / (stock.seuilAlerte * 2)) * 100,
-                        100
-                      )}%`,
-                    }}
-                  />
-                </div>
-              </div>
             </div>
 
             <div className="flex gap-2 mt-4">
-              <button className="flex-1 bg-blue-100 text-blue-700 py-2 px-3 rounded-lg hover:bg-blue-200 transition-colors text-sm">
-                Réapprovisionner
-              </button>
-              <button className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition-colors text-sm">
+              <button
+                onClick={() => openEditModal(stock)}
+                className="flex-1 bg-blue-100 text-blue-700 py-2 px-3 rounded-lg hover:bg-blue-200 transition-colors text-sm"
+              >
                 Modifier
+              </button>
+              <button
+                onClick={() => handleDelete(stock.id)}
+                className="flex-1 bg-red-100 text-red-700 py-2 px-3 rounded-lg hover:bg-red-200 transition-colors text-sm"
+              >
+                Supprimer
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingStock ? "Modifier Matière" : "Nouvelle Matière"}
+      >
+        <StockForm
+          stock={editingStock}
+          onSave={handleSave}
+          onCancel={() => setIsModalOpen(false)}
+        />
+      </Modal>
     </div>
   );
 }

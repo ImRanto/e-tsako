@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Eye, Edit, Package } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, Package } from "lucide-react";
+import OrderForm from "../components/OrderForm";
+import Modal from "../components/Modal";
 
 interface Client {
   id: number;
@@ -39,8 +41,11 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Commande[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<Commande | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Fetch commandes depuis API
+  // 🔹 Récupération initiale
   useEffect(() => {
     fetch(`${baseUrl}/api/commandes`)
       .then((res) => res.json())
@@ -49,6 +54,64 @@ export default function OrdersPage() {
       })
       .catch((err) => console.error("Erreur fetch commandes:", err));
   }, []);
+
+  const openCreateModal = () => {
+    setEditingOrder(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (order: Commande) => {
+    setEditingOrder(order);
+    setIsModalOpen(true);
+  };
+
+  // 🔹 Créer une commande
+  const handleCreate = async (newOrder: Omit<Commande, "id">) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${baseUrl}/api/commandes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newOrder),
+      });
+      const saved = await res.json();
+      setOrders([...orders, saved]); // Ajoute la commande avec l’ID venant du backend
+    } catch (err) {
+      console.error("Erreur création commande:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔹 Modifier une commande (Partial<Commande> = flexibilité)
+  const handleUpdate = async (id: number, updatedOrder: Partial<Commande>) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${baseUrl}/api/commandes/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedOrder),
+      });
+      const saved = await res.json();
+      setOrders(orders.map((o) => (o.id === id ? saved : o)));
+    } catch (err) {
+      console.error("Erreur modification commande:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔹 Supprimer une commande
+  const handleDelete = async (id: number) => {
+    if (confirm("Voulez-vous vraiment supprimer cette commande ?")) {
+      try {
+        await fetch(`${baseUrl}/api/commandes/${id}`, { method: "DELETE" });
+        setOrders(orders.filter((o) => o.id !== id));
+      } catch (err) {
+        console.error("Erreur suppression commande:", err);
+      }
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -81,9 +144,13 @@ export default function OrdersPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Commandes</h1>
           <p className="text-gray-600">Gérez toutes les commandes clients</p>
         </div>
-        <button className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm">
+        <button
+          onClick={openCreateModal}
+          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm disabled:opacity-50"
+          disabled={loading}
+        >
           <Plus size={20} className="mr-2" />
-          Nouvelle commande
+          {loading ? "Chargement..." : "Nouvelle commande"}
         </button>
       </div>
 
@@ -120,7 +187,14 @@ export default function OrdersPage() {
       {/* Liste des commandes */}
       <div className="grid gap-6">
         {filteredOrders.map((order) => {
-          const total = order.details.reduce((sum, d) => sum + d.prixTotal, 0);
+          // juste avant le return de la carte (dans le map)
+          const total =
+            order.details?.reduce((sum, d) => sum + (d.prixTotal || 0), 0) ?? 0;
+          const totalUnits =
+            order.details?.reduce(
+              (sum, d) => sum + (Number(d.quantite) || 0),
+              0
+            ) ?? 0;
 
           return (
             <div
@@ -162,9 +236,10 @@ export default function OrdersPage() {
                     <div>
                       <p className="text-gray-500">Articles</p>
                       <p className="font-medium">
-                        {order.details.length} produit(s)
+                        {totalUnits} produit(s)
                       </p>
                     </div>
+
                     <div>
                       <p className="text-gray-500">Total</p>
                       <p className="font-bold text-lg text-gray-900">
@@ -173,13 +248,25 @@ export default function OrdersPage() {
                     </div>
                     <div className="lg:text-right">
                       <div className="flex gap-2 mt-4 lg:mt-0">
-                        <button className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm">
+                        {/* <button className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm">
                           <Eye size={14} className="mr-1" />
                           Voir
-                        </button>
-                        <button className="flex items-center px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm">
+                        </button> */}
+                        <button
+                          onClick={() => openEditModal(order)}
+                          className="flex items-center px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm disabled:opacity-50"
+                          disabled={loading}
+                        >
                           <Edit size={14} className="mr-1" />
                           Modifier
+                        </button>
+                        <button
+                          onClick={() => handleDelete(order.id)}
+                          className="flex items-center px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm disabled:opacity-50"
+                          disabled={loading}
+                        >
+                          <Trash2 size={14} className="mr-1" />
+                          Supprimer
                         </button>
                       </div>
                     </div>
@@ -212,6 +299,26 @@ export default function OrdersPage() {
           );
         })}
       </div>
+
+      {/* Modal avec OrderForm */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingOrder ? "Modifier la commande" : "Nouvelle commande"}
+      >
+        <OrderForm
+          order={editingOrder}
+          onSave={async (data) => {
+            if (editingOrder) {
+              await handleUpdate(editingOrder.id, data);
+            } else {
+              await handleCreate(data);
+            }
+            setIsModalOpen(false);
+          }}
+          onCancel={() => setIsModalOpen(false)}
+        />
+      </Modal>
     </div>
   );
 }

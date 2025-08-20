@@ -34,30 +34,59 @@ export default function ProductsPage() {
       product.categorie.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSave = (productData: Omit<Product, "id">) => {
-    if (editingProduct) {
-      // Update côté frontend
-      setProducts(
-        products.map((p) =>
-          p.id === editingProduct.id
-            ? { ...productData, id: editingProduct.id }
-            : p
-        )
-      );
-    } else {
-      // Ajout côté frontend
-      const newProduct = { ...productData, id: Date.now() };
-      setProducts([...products, newProduct]);
+  const handleSave = async (productData: Omit<Product, "id">) => {
+    try {
+      let savedProduct: Product;
+
+      if (editingProduct) {
+        // PUT vers backend
+        const res = await fetch(
+          `${baseUrl}/api/produits/${editingProduct.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(productData),
+          }
+        );
+        savedProduct = await res.json();
+
+        setProducts(
+          products.map((p) => (p.id === editingProduct.id ? savedProduct : p))
+        );
+      } else {
+        // POST vers backend
+        const res = await fetch(`${baseUrl}/api/produits`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(productData),
+        });
+        savedProduct = await res.json();
+
+        // ⚡ Utilise l'ID venant de la base
+        setProducts([...products, savedProduct]);
+      }
+
+      setIsModalOpen(false);
+      setEditingProduct(null);
+    } catch (err) {
+      console.error("Erreur lors de la sauvegarde :", err);
+      alert("Échec de la sauvegarde du produit");
     }
-    setIsModalOpen(false);
-    setEditingProduct(null);
   };
 
-  const handleDelete = (id: number) => {
+
+  const handleDelete = async (id: number) => {
     if (confirm("Êtes-vous sûr de vouloir supprimer ce produit ?")) {
-      setProducts(products.filter((p) => p.id !== id));
+      try {
+        await fetch(`${baseUrl}/api/produits/${id}`, { method: "DELETE" });
+        setProducts(products.filter((p) => p.id !== id));
+      } catch (err) {
+        console.error("Erreur suppression :", err);
+        alert("Impossible de supprimer ce produit");
+      }
     }
   };
+
 
   const openEditModal = (product: Product) => {
     setEditingProduct(product);
