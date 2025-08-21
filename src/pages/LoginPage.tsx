@@ -2,20 +2,20 @@ import { useState } from "react";
 
 const baseUrl = import.meta.env.VITE_API_URL;
 
-interface Utilisateur {
-  id: number;
-  nom: string;
-  prenom: string;
-  role: string;
-  email: string;
-  motDePasse: string;
-}
-
 interface LoginPageProps {
   onLogin: () => void;
+  onShowRegister: () => void;
 }
 
-export default function LoginPage({ onLogin }: LoginPageProps) {
+interface LoginResponse {
+  id: number;
+  nom: string;
+  email: string;
+  role: string;
+  message: string;
+}
+
+export default function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -25,23 +25,25 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     setError("");
 
     try {
-      const res = await fetch(`${baseUrl}/api/utilisateurs`);
-      if (!res.ok) throw new Error("Impossible de récupérer les utilisateurs");
-      const utilisateurs: Utilisateur[] = await res.json();
+      const res = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, motDePasse: password }),
+      });
 
-      const utilisateur = utilisateurs.find(
-        (u) => u.email === email && u.motDePasse === password
-      );
-
-      if (utilisateur) {
-        // Auth réussie
-        onLogin();
-      } else {
-        setError("Email ou mot de passe incorrect");
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText || "Erreur lors de la connexion");
       }
-    } catch (err) {
+
+      const data: LoginResponse = await res.json();
+      console.log("Utilisateur connecté :", data);
+
+      // Succès
+      onLogin();
+    } catch (err: any) {
       console.error(err);
-      setError("Erreur lors de la connexion");
+      setError(err.message || "Erreur lors de la connexion");
     }
   };
 
@@ -55,9 +57,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           Connexion
         </h2>
 
-        {error && (
-          <p className="text-red-600 text-sm mb-2 text-center">{error}</p>
-        )}
+        {error && <p className="text-red-600 text-sm text-center">{error}</p>}
 
         <input
           type="email"
@@ -73,11 +73,20 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           onChange={(e) => setPassword(e.target.value)}
           className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
         />
+
         <button
           type="submit"
           className="w-full bg-amber-500 text-white py-2 rounded-lg hover:bg-amber-600 transition-colors"
         >
           Se connecter
+        </button>
+
+        <button
+          type="button"
+          onClick={onShowRegister}
+          className="w-full bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300"
+        >
+          Pas encore de compte ? S’inscrire
         </button>
       </form>
     </div>

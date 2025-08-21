@@ -6,7 +6,7 @@ import CustomerForm from "../components/CustomerForm";
 interface Customer {
   id: number;
   nom: string;
-  typeClient: "EPICERIE" | "PARTICULIER";
+  typeClient: "EPICERIE" | "PARTICULIER" | "RESTAURANT";
   telephone: string;
   email: string;
   adresse: string;
