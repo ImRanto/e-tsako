@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Package,
@@ -10,17 +10,25 @@ import {
   BarChart3,
   Menu,
   X,
+  LogOut,
 } from "lucide-react";
 
 interface SidebarProps {
   currentPage: string;
   onPageChange: (page: string) => void;
+  onLogout: () => void;
+}
+
+interface User {
+  nom: string;
+  email: string;
 }
 
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "products", label: "Produits", icon: Package },
   { id: "customers", label: "Clients", icon: Users },
+  { id: "users", label: "Users", icon: Users },
   { id: "orders", label: "Commandes", icon: ShoppingCart },
   { id: "expenses", label: "Dépenses", icon: TrendingDown },
   { id: "stock", label: "Stock", icon: Archive },
@@ -28,10 +36,23 @@ const menuItems = [
   { id: "reports", label: "Rapports", icon: BarChart3 },
 ];
 
-const app_name = import.meta.env.VITE_APP_NAME;
+const app_name = import.meta.env.VITE_APP_NAME || "Mon App";
 
-export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {
-  const [isOpen, setIsOpen] = React.useState(false);
+export default function Sidebar({
+  currentPage,
+  onPageChange,
+  onLogout,
+}: SidebarProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  // Charger l'utilisateur connecté
+  useEffect(() => {
+    const userData = localStorage.getItem("user"); // ou récupéré après login
+    if (userData) {
+      setCurrentUser(JSON.parse(userData));
+    }
+  }, []);
 
   return (
     <>
@@ -51,7 +72,7 @@ export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-center h-20 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+          <div className="flex items-center justify-center h-28 gap-3 p-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
             <Package size={32} className="mr-2" />
             <h1 className="text-xl font-bold">{app_name}</h1>
           </div>
@@ -85,17 +106,32 @@ export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {
             </ul>
           </nav>
 
-          {/* User info */}
+          {/* User info + Logout */}
           <div className="p-4 border-t border-gray-200">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-gradient-to-r from-amber-400 to-orange-400 rounded-full flex items-center justify-center text-white font-semibold">
-                A
+            {currentUser ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-gradient-to-r from-amber-400 to-orange-400 rounded-full flex items-center justify-center text-white font-semibold">
+                    {currentUser.nom.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="ml-3">
+                    <p className="font-medium text-gray-900">
+                      {currentUser.nom}
+                    </p>
+                    <p className="text-sm text-gray-500">{currentUser.email}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={onLogout}
+                  className="p-2 text-red-500 rounded hover:bg-red-100 transition-colors"
+                  title="Déconnexion"
+                >
+                  <LogOut size={20} />
+                </button>
               </div>
-              <div className="ml-3">
-                <p className="font-medium text-gray-900">Admin Principal</p>
-                <p className="text-sm text-gray-500">admin@i-tsaky.com</p>
-              </div>
-            </div>
+            ) : (
+              <p className="text-gray-500">Utilisateur non connecté</p>
+            )}
           </div>
         </div>
       </div>

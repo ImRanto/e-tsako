@@ -12,7 +12,7 @@ export default function CustomerForm({
   onCancel,
 }: CustomerFormProps) {
   const [nom, setNom] = useState("");
-  const [typeClient, setTypeClient] = useState<"EPICERIE" | "PARTICULIER">(
+  const [typeClient, setTypeClient] = useState<"EPICERIE" | "PARTICULIER" | "RESTAURANT">(
     "PARTICULIER"
   );
   const [telephone, setTelephone] = useState("");
@@ -23,7 +23,7 @@ export default function CustomerForm({
   useEffect(() => {
     if (customer) {
       setNom(customer.nom);
-      setTypeClient(customer.type_client);
+      setTypeClient(customer.typeClient);
       setTelephone(customer.telephone);
       setEmail(customer.email);
       setAdresse(customer.adresse);
@@ -32,7 +32,7 @@ export default function CustomerForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ nom, type_client: typeClient, telephone, email, adresse });
+    onSave({ nom, typeClient: typeClient, telephone, email, adresse });
   };
 
   return (
@@ -57,12 +57,15 @@ export default function CustomerForm({
         <select
           value={typeClient}
           onChange={(e) =>
-            setTypeClient(e.target.value as "EPICERIE" | "PARTICULIER")
+            setTypeClient(
+              e.target.value as "EPICERIE" | "PARTICULIER" | "RESTAURANT"
+            )
           }
           className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-amber-500 focus:border-amber-500"
         >
-          <option value="PARTICULIER">Particulier</option>
-          <option value="EPICERIE">Épicerie</option>
+          <option value="PARTICULIER">PARTICULIER</option>
+          <option value="EPICERIE">EPICERIE</option>
+          <option value="RESTAURANT">RESTAURANT</option>
         </select>
       </div>
 
