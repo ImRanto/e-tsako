@@ -16,6 +16,7 @@ interface RegisterResponse {
 }
 
 const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
+const app_name = import.meta.env.VITE_APP_NAME;
 
 export default function RegisterPage({
   onRegisterSuccess,
@@ -30,6 +31,11 @@ export default function RegisterPage({
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const isPasswordStrong = (password: string) => {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    return regex.test(password);
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -39,6 +45,14 @@ export default function RegisterPage({
     // Vérifier que tous les champs sont remplis
     if (!nom || !prenom || !email || !password || !secret) {
       setError("Veuillez remplir tous les champs !");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!isPasswordStrong(password)) {
+      setError(
+        "Le mot de passe doit contenir au moins 8 caractères, avec des majuscules, minuscules et chiffres."
+      );
       setIsLoading(false);
       return;
     }
@@ -289,8 +303,14 @@ export default function RegisterPage({
                 required
               />
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Utilisez au moins 8 caractères avec des lettres et des chiffres
+            <p
+              className={`text-xs mt-1 ${
+                isPasswordStrong(password) ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              {isPasswordStrong(password)
+                ? "Mot de passe sécurisé"
+                : "Mot de passe faible"}
             </p>
           </div>
 
@@ -385,7 +405,7 @@ export default function RegisterPage({
 
         <div className="bg-slate-50 px-8 py-4 border-t border-slate-200">
           <p className="text-xs text-center text-slate-500">
-            © {new Date().getFullYear()} I-TSAKY. Comptes administrateur
+            © {new Date().getFullYear()} {app_name}. Comptes administrateur
             uniquement.
           </p>
         </div>

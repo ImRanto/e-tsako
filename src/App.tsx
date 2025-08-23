@@ -165,7 +165,7 @@ function App() {
               <div className="bg-gray-50 p-4 text-center text-sm text-gray-600">
                 {showRegister
                   ? "En vous inscrivant, vous acceptez nos conditions d'utilisation et notre politique de confidentialité."
-                  : "© 2023 I-TSAKY. Tous droits réservés."}
+                  : ""}
               </div>
             </div>
           </div>
