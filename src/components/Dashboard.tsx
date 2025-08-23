@@ -1,18 +1,44 @@
+// Dashboard.tsx
 import { useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import StatCard from "./StatCard";
 import QuickActions from "./QuickActions";
 
+// types.ts
+export interface Stock {
+  id: number;
+  nomMatiere: string;
+  quantite: number;
+  unite: string;
+  seuilAlerte: number;
+}
+
+export interface RecentOrder {
+  id: number;
+  client: string;
+  total: string;
+  status: "PAYEE" | "EN_ATTENTE" | "LIVREE";
+  date: string;
+}
+
+export interface Stats {
+  clientsActifs: number;
+  produitsEnStock: number;
+  chiffreAffaires: number;
+  totalCommandes: number;
+}
+
+
 const baseUrl = import.meta.env.VITE_API_URL;
 const app_name = import.meta.env.VITE_APP_NAME;
 
 export default function Dashboard() {
-  const [stats, setStats] = useState<any[]>([]);
-  const [recentOrders, setRecentOrders] = useState<any[]>([]);
-  const [lowStockProducts, setLowStockProducts] = useState<any[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [lowStockProducts, setLowStockProducts] = useState<Stock[]>([]);
   const [error, setError] = useState("");
 
-  const token = localStorage.getItem("token"); // récupère le token JWT
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     if (!token) {
@@ -20,8 +46,10 @@ export default function Dashboard() {
       return;
     }
 
-    // Fonction générique pour fetch avec JWT
-    const fetchWithAuth = async (url: string, setter: Function) => {
+    const fetchWithAuth = async <T,>(
+      url: string,
+      setter: (data: T) => void
+    ) => {
       try {
         const res = await fetch(url, {
           headers: {
@@ -41,9 +69,12 @@ export default function Dashboard() {
       }
     };
 
-    fetchWithAuth(`${baseUrl}/api/dashboard/stats`, setStats);
-    fetchWithAuth(`${baseUrl}/api/orders/recent`, setRecentOrders);
-    fetchWithAuth(`${baseUrl}/api/stocks/low`, setLowStockProducts);
+    fetchWithAuth<Stats>(`${baseUrl}/api/commandes/stats`, setStats);
+    fetchWithAuth<RecentOrder[]>(
+      `${baseUrl}/api/commandes/recent`,
+      setRecentOrders
+    );
+    fetchWithAuth<Stock[]>(`${baseUrl}/api/stocks/low`, setLowStockProducts);
   }, [token]);
 
   if (error) {
@@ -64,11 +95,42 @@ export default function Dashboard() {
       </div>
 
       {/* Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat) => (
-          <StatCard key={stat.title} {...stat} />
-        ))}
-      </div>
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatCard
+            title="Clients actifs"
+            value={stats.clientsActifs.toString()}
+            change="+"
+            trend="up"
+            icon={AlertTriangle}
+            color="purple"
+          />
+          <StatCard
+            title="Produits en stock"
+            value={stats.produitsEnStock.toString()}
+            change="-"
+            trend="down"
+            icon={AlertTriangle}
+            color="amber"
+          />
+          <StatCard
+            title="Chiffre d'affaires"
+            value={stats.chiffreAffaires.toLocaleString()}
+            change="+12%"
+            trend="up"
+            icon={AlertTriangle}
+            color="green"
+          />
+          <StatCard
+            title="Total commandes"
+            value={stats.totalCommandes.toString()}
+            change="+8%"
+            trend="up"
+            icon={AlertTriangle}
+            color="blue"
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Commandes récentes */}
@@ -119,12 +181,15 @@ export default function Dashboard() {
             <div className="p-6 space-y-3">
               {lowStockProducts.map((product) => (
                 <div
-                  key={product.name}
+                  key={product.id}
                   className="p-3 bg-amber-50 rounded-lg border border-amber-200"
                 >
-                  <p className="font-medium text-amber-900">{product.name}</p>
+                  <p className="font-medium text-amber-900">
+                    {product.nomMatiere}
+                  </p>
                   <p className="text-sm text-amber-700">
-                    Stock: {product.stock} (Seuil: {product.seuil})
+                    Stock: {product.quantite} {product.unite} (Seuil:{" "}
+                    {product.seuilAlerte})
                   </p>
                 </div>
               ))}

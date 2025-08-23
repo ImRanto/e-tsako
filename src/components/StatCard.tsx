@@ -1,49 +1,49 @@
 import React from "react";
-import {
-  TrendingUp,
-  TrendingDown,
-  DivideIcon as LucideIcon,
-} from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 
 interface StatCardProps {
   title: string;
   value: string;
   change: string;
   trend: "up" | "down";
-  icon: LucideIcon;
-  color: "green" | "blue" | "purple" | "amber" | "red";
+  color: "green" | "blue" | "purple" | "amber" | "red" | "pink" | "teal";
+  icon: React.ElementType;
 }
 
 const colorClasses = {
-  green: "bg-green-500",
-  blue: "bg-blue-500",
-  purple: "bg-purple-500",
-  amber: "bg-amber-500",
-  red: "bg-red-500",
+  green: "bg-green-50 text-green-700",
+  blue: "bg-blue-50 text-blue-700",
+  purple: "bg-purple-50 text-purple-700",
+  amber: "bg-amber-50 text-amber-700",
+  red: "bg-red-50 text-red-700",
+  pink: "bg-pink-50 text-pink-700",
+  teal: "bg-teal-50 text-teal-700",
 };
 
-export default function StatCard({
+const StatCard: React.FC<StatCardProps> = ({
   title,
   value,
   change,
   trend,
-  icon: Icon,
   color,
-}: StatCardProps) {
+  icon: Icon,
+}) => {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+    <div
+      className={`rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all ${colorClasses[color]}`}
+    >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
+          <p className="text-sm font-semibold mb-1">{title}</p>
+          <p className="text-2xl font-bold">{value}</p>
           <div className="flex items-center mt-2">
             {trend === "up" ? (
-              <TrendingUp size={16} className="text-green-500 mr-1" />
+              <TrendingUp className="mr-1 text-green-500" size={16} />
             ) : (
-              <TrendingDown size={16} className="text-red-500 mr-1" />
+              <TrendingDown className="mr-1 text-red-500" size={16} />
             )}
             <span
-              className={`text-sm font-medium ${
+              className={`font-medium ${
                 trend === "up" ? "text-green-600" : "text-red-600"
               }`}
             >
@@ -52,10 +52,12 @@ export default function StatCard({
             <span className="text-sm text-gray-500 ml-1">vs mois dernier</span>
           </div>
         </div>
-        <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
-          <Icon size={24} className="text-white" />
+        <div className="p-3 rounded-lg bg-white shadow flex items-center justify-center">
+          <Icon size={24} className={`text-${color}-500`} />
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default StatCard;
