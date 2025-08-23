@@ -45,10 +45,18 @@ export default function OrdersPage() {
   const [editingOrder, setEditingOrder] = useState<Commande | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const token = localStorage.getItem("token");
+
   // 🔹 Récupération initiale
   useEffect(() => {
-    fetch(`${baseUrl}/api/commandes`)
-      .then((res) => res.json())
+    if (!token) return;
+    fetch(`${baseUrl}/api/commandes`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Unauthorized");
+        return res.json();
+      })
       .then((data: Commande[]) => {
         setOrders(data);
       })
@@ -67,15 +75,19 @@ export default function OrdersPage() {
 
   // 🔹 Créer une commande
   const handleCreate = async (newOrder: Omit<Commande, "id">) => {
+    if (!token) return;
     setLoading(true);
     try {
       const res = await fetch(`${baseUrl}/api/commandes`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(newOrder),
       });
       const saved = await res.json();
-      setOrders([...orders, saved]); // Ajoute la commande avec l’ID venant du backend
+      setOrders([...orders, saved]);
     } catch (err) {
       console.error("Erreur création commande:", err);
     } finally {
@@ -83,13 +95,17 @@ export default function OrdersPage() {
     }
   };
 
-  // 🔹 Modifier une commande (Partial<Commande> = flexibilité)
+  // 🔹 Modifier une commande
   const handleUpdate = async (id: number, updatedOrder: Partial<Commande>) => {
+    if (!token) return;
     setLoading(true);
     try {
       const res = await fetch(`${baseUrl}/api/commandes/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(updatedOrder),
       });
       const saved = await res.json();
@@ -103,9 +119,13 @@ export default function OrdersPage() {
 
   // 🔹 Supprimer une commande
   const handleDelete = async (id: number) => {
+    if (!token) return;
     if (confirm("Voulez-vous vraiment supprimer cette commande ?")) {
       try {
-        await fetch(`${baseUrl}/api/commandes/${id}`, { method: "DELETE" });
+        await fetch(`${baseUrl}/api/commandes/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setOrders(orders.filter((o) => o.id !== id));
       } catch (err) {
         console.error("Erreur suppression commande:", err);
@@ -187,7 +207,6 @@ export default function OrdersPage() {
       {/* Liste des commandes */}
       <div className="grid gap-6">
         {filteredOrders.map((order) => {
-          // juste avant le return de la carte (dans le map)
           const total =
             order.details?.reduce((sum, d) => sum + (d.prixTotal || 0), 0) ?? 0;
           const totalUnits =
@@ -235,9 +254,7 @@ export default function OrdersPage() {
                     </div>
                     <div>
                       <p className="text-gray-500">Articles</p>
-                      <p className="font-medium">
-                        {totalUnits} produit(s)
-                      </p>
+                      <p className="font-medium">{totalUnits} produit(s)</p>
                     </div>
 
                     <div>
@@ -248,10 +265,6 @@ export default function OrdersPage() {
                     </div>
                     <div className="lg:text-right">
                       <div className="flex gap-2 mt-4 lg:mt-0">
-                        {/* <button className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm">
-                          <Eye size={14} className="mr-1" />
-                          Voir
-                        </button> */}
                         <button
                           onClick={() => openEditModal(order)}
                           className="flex items-center px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm disabled:opacity-50"

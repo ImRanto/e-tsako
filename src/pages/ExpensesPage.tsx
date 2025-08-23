@@ -34,8 +34,18 @@ export default function ExpensesPage() {
 
   // Fetch des dépenses
   const fetchExpenses = () => {
-    fetch(`${baseUrl}/api/depenses`)
-      .then((res) => res.json())
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    fetch(`${baseUrl}/api/depenses`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Unauthorized");
+        return res.json();
+      })
       .then((data: Expense[]) => setExpenses(data))
       .catch((err) => console.error("Erreur fetch dépenses:", err));
   };
@@ -43,6 +53,51 @@ export default function ExpensesPage() {
   useEffect(() => {
     fetchExpenses();
   }, []);
+
+  // CRUD
+  const handleSave = async (expenseData: Omit<Expense, "id">) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    if (editingExpense) {
+      // Update via PUT
+      await fetch(`${baseUrl}/api/depenses/${editingExpense.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(expenseData),
+      });
+    } else {
+      // Create via POST
+      await fetch(`${baseUrl}/api/depenses`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(expenseData),
+      });
+    }
+    setIsModalOpen(false);
+    fetchExpenses();
+  };
+
+  const handleDelete = async (id: number) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    if (confirm("Êtes-vous sûr de vouloir supprimer cette dépense ?")) {
+      await fetch(`${baseUrl}/api/depenses/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      fetchExpenses();
+    }
+  };
 
   // Couleur et label pour chaque type de dépense
   const getTypeColor = (type: string) => {
@@ -100,33 +155,6 @@ export default function ExpensesPage() {
   const openEditModal = (expense: Expense) => {
     setEditingExpense(expense);
     setIsModalOpen(true);
-  };
-
-  const handleSave = async (expenseData: Omit<Expense, "id">) => {
-    if (editingExpense) {
-      // Update via PUT
-      await fetch(`${baseUrl}/api/depenses/${editingExpense.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(expenseData),
-      });
-    } else {
-      // Create via POST
-      await fetch(`${baseUrl}/api/depenses`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(expenseData),
-      });
-    }
-    setIsModalOpen(false);
-    fetchExpenses();
-  };
-
-  const handleDelete = async (id: number) => {
-    if (confirm("Êtes-vous sûr de vouloir supprimer cette dépense ?")) {
-      await fetch(`${baseUrl}/api/depenses/${id}`, { method: "DELETE" });
-      fetchExpenses();
-    }
   };
 
   return (

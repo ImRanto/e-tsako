@@ -2,22 +2,27 @@ import React, { useState, useEffect } from "react";
 
 interface CustomerFormProps {
   customer: any | null;
-  onSave: (customerData: Omit<any, "id">) => void;
+  onSaved?: () => void; // callback après sauvegarde réussie
   onCancel: () => void;
 }
 
 export default function CustomerForm({
   customer,
-  onSave,
+  onSaved,
   onCancel,
 }: CustomerFormProps) {
   const [nom, setNom] = useState("");
-  const [typeClient, setTypeClient] = useState<"EPICERIE" | "PARTICULIER" | "RESTAURANT">(
-    "PARTICULIER"
-  );
+  const [typeClient, setTypeClient] = useState<
+    "EPICERIE" | "PARTICULIER" | "RESTAURANT"
+  >("PARTICULIER");
   const [telephone, setTelephone] = useState("");
   const [email, setEmail] = useState("");
   const [adresse, setAdresse] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const baseUrl = import.meta.env.VITE_API_URL;
+  const token = localStorage.getItem("token"); // récupération du JWT
 
   // Pré-remplir si édition
   useEffect(() => {
@@ -30,13 +35,49 @@ export default function CustomerForm({
     }
   }, [customer]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ nom, typeClient: typeClient, telephone, email, adresse });
+    if (!token) {
+      setError("Utilisateur non authentifié");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const url = customer
+        ? `${baseUrl}/api/utilisateurs/${customer.id}`
+        : `${baseUrl}/api/utilisateurs`;
+      const method = customer ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ nom, typeClient, telephone, email, adresse }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Erreur lors de la sauvegarde");
+      }
+
+      onSaved?.();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Erreur inconnue");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {error && <p className="text-red-600">{error}</p>}
+
       {/* Nom */}
       <div>
         <label className="block text-sm font-medium text-gray-700">Nom</label>
@@ -49,7 +90,7 @@ export default function CustomerForm({
         />
       </div>
 
-      {/* Type */}
+      {/* Type de client */}
       <div>
         <label className="block text-sm font-medium text-gray-700">
           Type de client
@@ -113,12 +154,14 @@ export default function CustomerForm({
           type="button"
           onClick={onCancel}
           className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+          disabled={loading}
         >
           Annuler
         </button>
         <button
           type="submit"
           className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+          disabled={loading}
         >
           {customer ? "Mettre à jour" : "Ajouter"}
         </button>

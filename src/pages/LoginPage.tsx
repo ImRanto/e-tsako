@@ -13,6 +13,7 @@ interface LoginResponse {
   email: string;
   role: string;
   message: string;
+  token: string; // ✅ ajout du token
 }
 
 export default function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
@@ -38,6 +39,9 @@ export default function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
 
       const data: LoginResponse = await res.json();
       console.log("Utilisateur connecté :", data);
+
+      // ✅ Sauvegarder le token JWT dans le localStorage
+      localStorage.setItem("token", data.token);
 
       // Succès
       onLogin();

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export interface StockData {
   id?: number;
@@ -10,37 +10,95 @@ export interface StockData {
 
 interface StockFormProps {
   stock: StockData | null;
-  onSave: (stockData: Omit<StockData, "id">) => void;
+  onSaved?: () => void; // callback après sauvegarde réussie
   onCancel: () => void;
 }
 
-export default function StockForm({ stock, onSave, onCancel }: StockFormProps) {
-  const [nomMatiere, setNomMatiere] = useState(stock?.nomMatiere || "");
-  const [quantite, setQuantite] = useState(stock?.quantite || 0);
-  const [unite, setUnite] = useState(stock?.unite || "kg");
-  const [seuilAlerte, setSeuilAlerte] = useState(stock?.seuilAlerte || 0);
+export default function StockForm({
+  stock,
+  onSaved,
+  onCancel,
+}: StockFormProps) {
+  const [nomMatiere, setNomMatiere] = useState("");
+  const [quantite, setQuantite] = useState(0);
+  const [unite, setUnite] = useState("kg");
+  const [seuilAlerte, setSeuilAlerte] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const baseUrl = import.meta.env.VITE_API_URL;
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    if (stock) {
+      setNomMatiere(stock.nomMatiere);
+      setQuantite(stock.quantite);
+      setUnite(stock.unite);
+      setSeuilAlerte(stock.seuilAlerte);
+    } else {
+      setNomMatiere("");
+      setQuantite(0);
+      setUnite("kg");
+      setSeuilAlerte(0);
+    }
+  }, [stock]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const quant = Number(quantite);
-    const seuil = Number(seuilAlerte);
-
-    if (!nomMatiere || !unite || quant < 0 || seuil < 0) {
-      alert("Veuillez remplir correctement tous les champs !");
+    if (!nomMatiere || !unite || quantite < 0 || seuilAlerte < 0) {
+      setError("Veuillez remplir correctement tous les champs !");
       return;
     }
 
-    onSave({
+    if (!token) {
+      setError("Utilisateur non authentifié !");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    const payload: Omit<StockData, "id"> = {
       nomMatiere: nomMatiere.trim(),
-      quantite: quant,
+      quantite,
       unite: unite.trim().toUpperCase(),
-      seuilAlerte: seuil,
-    });
+      seuilAlerte,
+    };
+
+    try {
+      const url = stock
+        ? `${baseUrl}/api/stocks/${stock.id}`
+        : `${baseUrl}/api/stocks`;
+      const method = stock ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Erreur lors de la sauvegarde du stock");
+      }
+
+      onSaved?.(); // callback pour fermer le modal et rafraîchir la liste
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Erreur inconnue");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {error && <p className="text-red-600">{error}</p>}
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Nom de la matière
@@ -97,12 +155,14 @@ export default function StockForm({ stock, onSave, onCancel }: StockFormProps) {
           type="button"
           onClick={onCancel}
           className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+          disabled={loading}
         >
           Annuler
         </button>
         <button
           type="submit"
           className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+          disabled={loading}
         >
           {stock ? "Modifier" : "Créer"}
         </button>

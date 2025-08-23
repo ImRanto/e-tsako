@@ -33,13 +33,17 @@ interface Commande {
 
 interface OrderFormProps {
   order?: Commande | null;
-  onSave: (order: Omit<Commande, "id">) => void;
+  onSaved?: () => void; // callback après sauvegarde
   onCancel: () => void;
 }
 
 const baseUrl = import.meta.env.VITE_API_URL;
 
-export default function OrderForm({ order, onSave, onCancel }: OrderFormProps) {
+export default function OrderForm({
+  order,
+  onSaved,
+  onCancel,
+}: OrderFormProps) {
   const [clients, setClients] = useState<Client[]>([]);
   const [produits, setProduits] = useState<Produit[]>([]);
   const [clientId, setClientId] = useState(order?.client.id || "");
@@ -47,19 +51,26 @@ export default function OrderForm({ order, onSave, onCancel }: OrderFormProps) {
   const [details, setDetails] = useState<DetailCommande[]>(
     order?.details || []
   );
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Charger clients et produits depuis backend
+  const token = localStorage.getItem("token");
+
   useEffect(() => {
-    fetch(`${baseUrl}/api/clients`)
+    fetch(`${baseUrl}/api/clients`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then((res) => res.json())
       .then(setClients)
       .catch((err) => console.error("Erreur fetch clients:", err));
 
-    fetch(`${baseUrl}/api/produits`)
+    fetch(`${baseUrl}/api/produits`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then((res) => res.json())
       .then(setProduits)
       .catch((err) => console.error("Erreur fetch produits:", err));
-  }, []);
+  }, [token]);
 
   const handleAddDetail = () => {
     if (produits.length === 0) return;
@@ -95,23 +106,66 @@ export default function OrderForm({ order, onSave, onCancel }: OrderFormProps) {
     setDetails(details.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const client = clients.find((c) => c.id === parseInt(clientId as string));
-    if (!client) return alert("Veuillez sélectionner un client");
+    if (!clientId) {
+      setError("Veuillez sélectionner un client !");
+      return;
+    }
 
-    onSave({
+    if (!token) {
+      setError("Utilisateur non authentifié !");
+      return;
+    }
+
+    const client = clients.find((c) => c.id === parseInt(clientId as string));
+    if (!client) return;
+
+    const payload: Omit<Commande, "id"> = {
       client,
       dateCommande: order?.dateCommande || new Date().toISOString(),
       statut,
       details,
-    });
+    };
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const url = order
+        ? `${baseUrl}/api/commandes/${order.id}`
+        : `${baseUrl}/api/commandes`;
+      const method = order ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Erreur lors de la sauvegarde de la commande");
+      }
+
+      onSaved?.();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Erreur inconnue");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const total = details.reduce((sum, d) => sum + d.prixTotal, 0);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {error && <p className="text-red-600">{error}</p>}
+
       {/* Sélection client */}
       <div>
         <label className="block text-sm font-medium text-gray-700">
@@ -132,7 +186,7 @@ export default function OrderForm({ order, onSave, onCancel }: OrderFormProps) {
         </select>
       </div>
 
-      {/* Sélection statut */}
+      {/* Statut */}
       <div>
         <label className="block text-sm font-medium text-gray-700">
           Statut
@@ -149,7 +203,7 @@ export default function OrderForm({ order, onSave, onCancel }: OrderFormProps) {
         </select>
       </div>
 
-      {/* Détails commande */}
+      {/* Détails */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Articles
@@ -211,12 +265,14 @@ export default function OrderForm({ order, onSave, onCancel }: OrderFormProps) {
           type="button"
           onClick={onCancel}
           className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+          disabled={loading}
         >
           Annuler
         </button>
         <button
           type="submit"
           className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600"
+          disabled={loading}
         >
           {order ? "Mettre à jour" : "Créer"}
         </button>

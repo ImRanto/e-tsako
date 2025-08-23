@@ -1,112 +1,120 @@
+// src/pages/StockPage.tsx
 import { useState, useEffect } from "react";
 import { Plus, Search, AlertTriangle, Package } from "lucide-react";
 import Modal from "../components/Modal";
-import StockForm from "../components/StockForm";
-
-interface Stock {
-  id?: number;
-  nomMatiere: string;
-  quantite: number;
-  unite: string;
-  seuilAlerte: number;
-}
+import StockForm, { StockData } from "../components/StockForm";
 
 const baseUrl = import.meta.env.VITE_API_URL;
 
 export default function StockPage() {
-  const [stocks, setStocks] = useState<Stock[]>([]);
+  const [stocks, setStocks] = useState<StockData[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingStock, setEditingStock] = useState<Stock | null>(null);
+  const [editingStock, setEditingStock] = useState<StockData | null>(null);
 
-  // Charger les stocks depuis le backend
-  const fetchStocks = () => {
-    fetch(`${baseUrl}/api/stocks`)
-      .then((res) => res.json())
-      .then((data: Stock[]) => setStocks(data))
-      .catch((err) => console.error("Erreur fetch stocks:", err));
+  const token = localStorage.getItem("token");
+
+  // Fetch des stocks
+  const fetchStocks = async () => {
+    if (!token) return alert("Utilisateur non authentifié !");
+    try {
+      const res = await fetch(`${baseUrl}/api/stocks`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`Erreur API (${res.status})`);
+      const data: StockData[] = await res.json();
+      setStocks(data);
+    } catch (err) {
+      console.error("Erreur fetch stocks:", err);
+      alert("Erreur lors de la récupération des stocks.");
+    }
   };
 
   useEffect(() => {
     fetchStocks();
   }, []);
 
-  // Filtrage sécurisé pour éviter undefined
-  const filteredStocks = stocks
-    .filter((stock) => stock.nomMatiere)
-    .filter((stock) =>
-      stock.nomMatiere.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-  const lowStockItems = filteredStocks.filter(
-    (stock) => stock.quantite <= stock.seuilAlerte
-  );
-  const normalStockItems = filteredStocks.filter(
-    (stock) => stock.quantite > stock.seuilAlerte
-  );
-
-  // Création ou modification d'un stock
-  const handleSave = async (stockData: Omit<Stock, "id">) => {
+  // Sauvegarde (création ou modification)
+  const handleSave = async (stockData: Omit<StockData, "id">) => {
+    if (!token) return alert("Utilisateur non authentifié !");
     try {
-      let response: Response;
+      let res: Response;
+
       if (editingStock?.id) {
-        response = await fetch(`${baseUrl}/api/stocks/${editingStock.id}`, {
+        // Modification
+        res = await fetch(`${baseUrl}/api/stocks/${editingStock.id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify(stockData),
         });
+
+        if (!res.ok) throw new Error(`Erreur API (${res.status})`);
+
+        const updatedStock = await res.json();
+        setStocks((prev) =>
+          prev.map((s) => (s.id === updatedStock.id ? updatedStock : s))
+        );
       } else {
-        response = await fetch(`${baseUrl}/api/stocks`, {
+        // Création
+        res = await fetch(`${baseUrl}/api/stocks`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify(stockData),
         });
+
+        if (!res.ok) throw new Error(`Erreur API (${res.status})`);
+
+        const newStock = await res.json();
+        setStocks((prev) => [...prev, newStock]);
       }
 
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(JSON.stringify(errData));
-      }
-
-      // rafraîchir la liste
-      fetchStocks();
+      // Fermer modal et réinitialiser
       setIsModalOpen(false);
       setEditingStock(null);
     } catch (err) {
       console.error("Erreur sauvegarde stock:", err);
-      alert("Erreur lors de l'enregistrement du stock. Vérifiez les champs.");
+      alert("Erreur lors de l'enregistrement du stock.");
     }
   };
 
+  // Suppression
   const handleDelete = async (id?: number) => {
     if (!id) return;
     if (!confirm("Êtes-vous sûr de vouloir supprimer ce stock ?")) return;
-
+    if (!token) return alert("Utilisateur non authentifié !");
     try {
-      const response = await fetch(`${baseUrl}/api/stocks/${id}`, {
+      const res = await fetch(`${baseUrl}/api/stocks/${id}`, {
         method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (!response.ok) throw new Error("Erreur suppression stock");
-      fetchStocks();
+      if (!res.ok) throw new Error(`Erreur API (${res.status})`);
+      setStocks((prev) => prev.filter((s) => s.id !== id));
     } catch (err) {
-      console.error(err);
-      alert("Erreur lors de la suppression du stock");
+      console.error("Erreur suppression stock:", err);
+      alert("Erreur lors de la suppression du stock.");
     }
   };
 
-  const openEditModal = (stock: Stock) => {
-    setEditingStock(stock);
-    setIsModalOpen(true);
-  };
+  const filteredStocks = stocks.filter((s) =>
+    s.nomMatiere.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const openCreateModal = () => {
-    setEditingStock(null);
-    setIsModalOpen(true);
-  };
+  const lowStockItems = filteredStocks.filter(
+    (s) => s.quantite <= s.seuilAlerte
+  );
+  const normalStockItems = filteredStocks.filter(
+    (s) => s.quantite > s.seuilAlerte
+  );
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      {/* Header */}
+      {/* Header & Add Button */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -117,7 +125,10 @@ export default function StockPage() {
           </p>
         </div>
         <button
-          onClick={openCreateModal}
+          onClick={() => {
+            setEditingStock(null);
+            setIsModalOpen(true);
+          }}
           className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm"
         >
           <Plus size={20} className="mr-2" />
@@ -142,7 +153,7 @@ export default function StockPage() {
         </div>
       </div>
 
-      {/* Low Stock Alert */}
+      {/* Low Stock */}
       {lowStockItems.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-6">
           <div className="flex items-center mb-4">
@@ -152,28 +163,24 @@ export default function StockPage() {
             </h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {lowStockItems.map((stock) => (
+            {lowStockItems.map((s) => (
               <div
-                key={stock.id}
+                key={s.id}
                 className="bg-white border border-red-200 rounded-lg p-4"
               >
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-gray-900">
-                    {stock.nomMatiere}
-                  </h4>
+                  <h4 className="font-medium text-gray-900">{s.nomMatiere}</h4>
                   <AlertTriangle size={16} className="text-red-500" />
                 </div>
-                <div className="text-sm text-gray-600">
-                  <p>
-                    Stock:{" "}
-                    <span className="font-semibold text-red-600">
-                      {stock.quantite} {stock.unite}
-                    </span>
-                  </p>
-                  <p>
-                    Seuil: {stock.seuilAlerte} {stock.unite}
-                  </p>
-                </div>
+                <p className="text-sm text-gray-600">
+                  Stock:{" "}
+                  <span className="font-semibold text-red-600">
+                    {s.quantite} {s.unite}
+                  </span>
+                </p>
+                <p className="text-sm text-gray-600">
+                  Seuil: {s.seuilAlerte} {s.unite}
+                </p>
               </div>
             ))}
           </div>
@@ -182,9 +189,9 @@ export default function StockPage() {
 
       {/* Stock Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {normalStockItems.map((stock) => (
+        {normalStockItems.map((s) => (
           <div
-            key={stock.id}
+            key={s.id}
             className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between mb-4">
@@ -194,7 +201,7 @@ export default function StockPage() {
                 </div>
                 <div className="ml-3">
                   <h3 className="font-semibold text-gray-900">
-                    {stock.nomMatiere}
+                    {s.nomMatiere}
                   </h3>
                   <p className="text-sm text-gray-500">En stock</p>
                 </div>
@@ -205,27 +212,30 @@ export default function StockPage() {
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Quantité disponible</span>
                 <span className="font-bold text-lg text-green-600">
-                  {stock.quantite} {stock.unite}
+                  {s.quantite} {s.unite}
                 </span>
               </div>
-
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Seuil d'alerte</span>
                 <span className="text-gray-900">
-                  {stock.seuilAlerte} {stock.unite}
+                  {s.seuilAlerte} {s.unite}
                 </span>
               </div>
             </div>
 
             <div className="flex gap-2 mt-4">
               <button
-                onClick={() => openEditModal(stock)}
+                onClick={() => {
+                  setEditingStock(s);
+                  setIsModalOpen(false);
+                  setTimeout(() => setIsModalOpen(true), 0); // réinitialisation
+                }}
                 className="flex-1 bg-blue-100 text-blue-700 py-2 px-3 rounded-lg hover:bg-blue-200 transition-colors text-sm"
               >
                 Modifier
               </button>
               <button
-                onClick={() => handleDelete(stock.id)}
+                onClick={() => handleDelete(s.id)}
                 className="flex-1 bg-red-100 text-red-700 py-2 px-3 rounded-lg hover:bg-red-200 transition-colors text-sm"
               >
                 Supprimer

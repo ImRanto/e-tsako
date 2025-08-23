@@ -22,20 +22,36 @@ export default function CustomersPage() {
 
   // Charger depuis backend
   useEffect(() => {
-    fetch(`${baseUrl}/api/clients`)
-      .then((res) => res.json())
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    fetch(`${baseUrl}/api/clients`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Unauthorized");
+        return res.json();
+      })
       .then((data: Customer[]) => setCustomers(data))
       .catch((err) => console.error("Erreur fetch clients:", err));
   }, []);
 
   // Ajouter / Modifier
   const handleSave = async (customerData: Omit<Customer, "id">) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
     if (editingCustomer) {
       // UPDATE
       const updated = { ...editingCustomer, ...customerData };
       await fetch(`${baseUrl}/api/clients/${editingCustomer.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(updated),
       });
       setCustomers(
@@ -45,7 +61,10 @@ export default function CustomersPage() {
       // CREATE
       const res = await fetch(`${baseUrl}/api/clients`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(customerData),
       });
       const newCustomer = await res.json();
@@ -57,9 +76,15 @@ export default function CustomersPage() {
 
   // Supprimer
   const handleDelete = async (id: number) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
     if (confirm("Êtes-vous sûr de vouloir supprimer ce client ?")) {
       await fetch(`${baseUrl}/api/clients/${id}`, {
         method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       setCustomers(customers.filter((c) => c.id !== id));
     }

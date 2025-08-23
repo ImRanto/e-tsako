@@ -20,22 +20,26 @@ export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
 
-  // Fetch des produits depuis l'API au chargement
+  // 🔹 Récupération initiale
   useEffect(() => {
-    fetch(`${baseUrl}/api/produits`)
-      .then((res) => res.json())
+    const token = localStorage.getItem("token");
+    fetch(`${baseUrl}/api/produits`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Erreur API produits");
+        return res.json();
+      })
       .then((data) => setProducts(data))
       .catch((err) => console.error("Erreur lors du fetch des produits:", err));
   }, []);
 
-  const filteredProducts = products.filter(
-    (product) =>
-      product.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.categorie.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
+  // 🔹 Sauvegarde produit (create ou update)
   const handleSave = async (productData: Omit<Product, "id">) => {
     try {
+      const token = localStorage.getItem("token");
       let savedProduct: Product;
 
       if (editingProduct) {
@@ -44,10 +48,14 @@ export default function ProductsPage() {
           `${baseUrl}/api/produits/${editingProduct.id}`,
           {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
             body: JSON.stringify(productData),
           }
         );
+        if (!res.ok) throw new Error("Erreur modification produit");
         savedProduct = await res.json();
 
         setProducts(
@@ -57,12 +65,15 @@ export default function ProductsPage() {
         // POST vers backend
         const res = await fetch(`${baseUrl}/api/produits`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify(productData),
         });
+        if (!res.ok) throw new Error("Erreur création produit");
         savedProduct = await res.json();
 
-        // ⚡ Utilise l'ID venant de la base
         setProducts([...products, savedProduct]);
       }
 
@@ -74,11 +85,18 @@ export default function ProductsPage() {
     }
   };
 
-
+  // 🔹 Suppression produit
   const handleDelete = async (id: number) => {
     if (confirm("Êtes-vous sûr de vouloir supprimer ce produit ?")) {
       try {
-        await fetch(`${baseUrl}/api/produits/${id}`, { method: "DELETE" });
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${baseUrl}/api/produits/${id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error("Erreur suppression produit");
         setProducts(products.filter((p) => p.id !== id));
       } catch (err) {
         console.error("Erreur suppression :", err);
@@ -87,6 +105,11 @@ export default function ProductsPage() {
     }
   };
 
+  const filteredProducts = products.filter(
+    (product) =>
+      product.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.categorie.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const openEditModal = (product: Product) => {
     setEditingProduct(product);

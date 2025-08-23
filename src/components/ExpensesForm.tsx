@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface ExpenseFormProps {
   expense: {
@@ -13,13 +13,13 @@ interface ExpenseFormProps {
     dateDepense: string;
     description: string;
   } | null;
-  onSave: (expenseData: Omit<ExpenseFormProps["expense"], "id">) => void;
+  onSaved?: () => void; // callback après sauvegarde réussie
   onCancel: () => void;
 }
 
 export default function ExpenseForm({
   expense,
-  onSave,
+  onSaved,
   onCancel,
 }: ExpenseFormProps) {
   const [typeDepense, setTypeDepense] = useState(
@@ -30,18 +30,75 @@ export default function ExpenseForm({
     expense?.dateDepense || new Date().toISOString().slice(0, 10)
   );
   const [description, setDescription] = useState(expense?.description || "");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const baseUrl = import.meta.env.VITE_API_URL;
+  const token = localStorage.getItem("token"); // JWT
+
+  useEffect(() => {
+    if (expense) {
+      setTypeDepense(expense.typeDepense);
+      setMontant(expense.montant);
+      setDateDepense(expense.dateDepense);
+      setDescription(expense.description);
+    }
+  }, [expense]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!montant || !description) {
-      alert("Veuillez remplir tous les champs !");
+      setError("Veuillez remplir tous les champs !");
       return;
     }
-    onSave({ typeDepense, montant, dateDepense, description });
+
+    if (!token) {
+      setError("Utilisateur non authentifié !");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const url = expense
+        ? `${baseUrl}/api/depenses/${expense.id}`
+        : `${baseUrl}/api/depenses`;
+      const method = expense ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          typeDepense,
+          montant,
+          dateDepense,
+          description,
+        }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Erreur lors de la sauvegarde de la dépense");
+      }
+
+      onSaved?.();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Erreur inconnue");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {error && <p className="text-red-600">{error}</p>}
+
+      {/* Type de dépense */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Type de dépense
@@ -59,6 +116,7 @@ export default function ExpenseForm({
         </select>
       </div>
 
+      {/* Montant */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Montant (Ar)
@@ -72,6 +130,7 @@ export default function ExpenseForm({
         />
       </div>
 
+      {/* Date */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Date
@@ -84,6 +143,7 @@ export default function ExpenseForm({
         />
       </div>
 
+      {/* Description */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Description
@@ -96,17 +156,20 @@ export default function ExpenseForm({
         />
       </div>
 
+      {/* Boutons */}
       <div className="flex justify-end gap-2 mt-4">
         <button
           type="button"
           onClick={onCancel}
           className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+          disabled={loading}
         >
           Annuler
         </button>
         <button
           type="submit"
           className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+          disabled={loading}
         >
           {expense ? "Modifier" : "Créer"}
         </button>

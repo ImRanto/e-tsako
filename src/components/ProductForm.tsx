@@ -1,4 +1,3 @@
-// src/components/ProductForm.tsx
 import { useEffect, useState } from "react";
 
 interface Product {
@@ -10,8 +9,8 @@ interface Product {
 }
 
 interface ProductFormProps {
-  product: Product | null; // null => création, sinon édition
-  onSave: (saved: Product) => void; // renvoie l'objet sauvegardé du backend
+  product: Product | null;
+  onSave: (saved: Product) => void;
   onCancel: () => void;
 }
 
@@ -28,6 +27,8 @@ export default function ProductForm({
   const [stockDisponible, setStockDisponible] = useState<number>(0);
   const [loading, setLoading] = useState(false);
 
+  const token = localStorage.getItem("token");
+
   useEffect(() => {
     if (product) {
       setNom(product.nom);
@@ -35,7 +36,6 @@ export default function ProductForm({
       setPrixUnitaire(product.prixUnitaire);
       setStockDisponible(product.stockDisponible);
     } else {
-      // reset si on ouvre en mode création
       setNom("");
       setCategorie("CHIPS");
       setPrixUnitaire(0);
@@ -49,17 +49,25 @@ export default function ProductForm({
       alert("Veuillez renseigner le nom et un prix unitaire > 0.");
       return;
     }
+
+    if (!token) {
+      alert("Utilisateur non authentifié !");
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = { nom, categorie, prixUnitaire, stockDisponible };
-
       const url = product
         ? `${baseUrl}/api/produits/${product.id}`
         : `${baseUrl}/api/produits`;
 
       const res = await fetch(url, {
         method: product ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(payload),
       });
 
@@ -147,6 +155,7 @@ export default function ProductForm({
           type="button"
           onClick={onCancel}
           className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+          disabled={loading}
         >
           Annuler
         </button>

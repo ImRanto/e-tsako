@@ -10,23 +10,49 @@ export default function Dashboard() {
   const [stats, setStats] = useState<any[]>([]);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [lowStockProducts, setLowStockProducts] = useState<any[]>([]);
+  const [error, setError] = useState("");
+
+  const token = localStorage.getItem("token"); // récupère le token JWT
 
   useEffect(() => {
-    // Charger les stats
-    fetch(`${baseUrl}/api/dashboard/stats`)
-      .then((res) => res.json())
-      .then((data) => setStats(data));
+    if (!token) {
+      setError("Utilisateur non authentifié");
+      return;
+    }
 
-    // Charger commandes récentes
-    fetch(`${baseUrl}/api/orders/recent`)
-      .then((res) => res.json())
-      .then((data) => setRecentOrders(data));
+    // Fonction générique pour fetch avec JWT
+    const fetchWithAuth = async (url: string, setter: Function) => {
+      try {
+        const res = await fetch(url, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || "Erreur lors de la récupération des données");
+        }
+        const data = await res.json();
+        setter(data);
+      } catch (err: any) {
+        console.error(err);
+        setError(err.message || "Erreur inconnue");
+      }
+    };
 
-    // Charger les alertes stock
-    fetch(`${baseUrl}/api/stocks/low`)
-      .then((res) => res.json())
-      .then((data) => setLowStockProducts(data));
-  }, []);
+    fetchWithAuth(`${baseUrl}/api/dashboard/stats`, setStats);
+    fetchWithAuth(`${baseUrl}/api/orders/recent`, setRecentOrders);
+    fetchWithAuth(`${baseUrl}/api/stocks/low`, setLowStockProducts);
+  }, [token]);
+
+  if (error) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <p className="text-red-600 font-medium">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto">

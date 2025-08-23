@@ -39,13 +39,23 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${baseUrl}/api/utilisateurs`);
+      const token = localStorage.getItem("token"); // récupère le token
+      if (!token) throw new Error("Utilisateur non authentifié");
+
+      const res = await fetch(`${baseUrl}/api/utilisateurs`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // <-- JWT ajouté ici
+        },
+      });
+
       if (!res.ok) {
         const text = await res.text();
         throw new Error(
           text || "Erreur lors de la récupération des utilisateurs"
         );
       }
+
       const data: User[] = await res.json();
       setUsers(data);
       setFilteredUsers(data);
@@ -56,6 +66,7 @@ export default function UsersPage() {
       setLoading(false);
     }
   };
+
 
   // Filter users
   useEffect(() => {
@@ -68,19 +79,27 @@ export default function UsersPage() {
     setFilteredUsers(filtered);
   }, [searchTerm, users]);
 
-  // Handle delete
   const handleDelete = async (id?: number) => {
     if (!id) return;
     if (!confirm("Voulez-vous vraiment supprimer cet utilisateur ?")) return;
 
     try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Utilisateur non authentifié");
+
       const res = await fetch(`${baseUrl}/api/utilisateurs/${id}`, {
         method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
+
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || "Erreur lors de la suppression");
       }
+
       setUsers((prev) => prev.filter((u) => u.id !== id));
       setFilteredUsers((prev) => prev.filter((u) => u.id !== id));
     } catch (err: any) {
@@ -88,9 +107,12 @@ export default function UsersPage() {
     }
   };
 
-  // Handle save (create/update)
+
   const handleSave = async () => {
     try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Utilisateur non authentifié");
+
       const url = editingUser?.id
         ? `${baseUrl}/api/utilisateurs/${editingUser.id}`
         : `${baseUrl}/api/utilisateurs`;
@@ -98,7 +120,10 @@ export default function UsersPage() {
 
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(formData),
       });
 

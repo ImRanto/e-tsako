@@ -37,6 +37,7 @@ const menuItems = [
 ];
 
 const app_name = import.meta.env.VITE_APP_NAME || "Mon App";
+const baseUrl = import.meta.env.VITE_API_URL;
 
 export default function Sidebar({
   currentPage,
@@ -46,13 +47,41 @@ export default function Sidebar({
   const [isOpen, setIsOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  // Charger l'utilisateur connecté
   useEffect(() => {
-    const userData = localStorage.getItem("user"); // ou récupéré après login
-    if (userData) {
-      setCurrentUser(JSON.parse(userData));
-    }
+    const fetchUser = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const res = await fetch(`${baseUrl}/api/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          console.warn("Impossible de récupérer l'utilisateur connecté");
+          // essayer de lire un JSON d'erreur si dispo, sinon ignorer
+          try {
+            const errData = await res.json();
+            console.error("Erreur /me :", errData);
+          } catch {
+            console.error("Réponse vide ou non JSON");
+          }
+          return;
+        }
+
+        const data: User = await res.json();
+        setCurrentUser(data);
+        localStorage.setItem("user", JSON.stringify(data));
+      } catch (err) {
+        console.error("Erreur récupération /me :", err);
+      }
+    };
+
+    fetchUser();
   }, []);
+
 
   return (
     <>
