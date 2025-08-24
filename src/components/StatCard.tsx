@@ -8,16 +8,59 @@ interface StatCardProps {
   trend: "up" | "down";
   color: "green" | "blue" | "purple" | "amber" | "red" | "pink" | "teal";
   icon: React.ElementType;
+  loading?: boolean;
 }
 
 const colorClasses = {
-  green: "bg-green-50 text-green-700",
-  blue: "bg-blue-50 text-blue-700",
-  purple: "bg-purple-50 text-purple-700",
-  amber: "bg-amber-50 text-amber-700",
-  red: "bg-red-50 text-red-700",
-  pink: "bg-pink-50 text-pink-700",
-  teal: "bg-teal-50 text-teal-700",
+  green: {
+    bg: "bg-green-50",
+    text: "text-green-700",
+    icon: "text-green-500",
+    trendUp: "text-green-600",
+    trendDown: "text-red-600",
+  },
+  blue: {
+    bg: "bg-blue-50",
+    text: "text-blue-700",
+    icon: "text-blue-500",
+    trendUp: "text-green-600",
+    trendDown: "text-red-600",
+  },
+  purple: {
+    bg: "bg-purple-50",
+    text: "text-purple-700",
+    icon: "text-purple-500",
+    trendUp: "text-green-600",
+    trendDown: "text-red-600",
+  },
+  amber: {
+    bg: "bg-amber-50",
+    text: "text-amber-700",
+    icon: "text-amber-500",
+    trendUp: "text-green-600",
+    trendDown: "text-red-600",
+  },
+  red: {
+    bg: "bg-red-50",
+    text: "text-red-700",
+    icon: "text-red-500",
+    trendUp: "text-green-600",
+    trendDown: "text-red-600",
+  },
+  pink: {
+    bg: "bg-pink-50",
+    text: "text-pink-700",
+    icon: "text-pink-500",
+    trendUp: "text-green-600",
+    trendDown: "text-red-600",
+  },
+  teal: {
+    bg: "bg-teal-50",
+    text: "text-teal-700",
+    icon: "text-teal-500",
+    trendUp: "text-green-600",
+    trendDown: "text-red-600",
+  },
 };
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -27,33 +70,51 @@ const StatCard: React.FC<StatCardProps> = ({
   trend,
   color,
   icon: Icon,
+  loading = false,
 }) => {
+  const colors = colorClasses[color];
+
+  if (loading) {
+    return (
+      <div className="rounded-xl shadow-sm border border-gray-200 p-6 bg-gray-50 animate-pulse">
+        <div className="flex items-center justify-between">
+          <div className="space-y-3">
+            <div className="h-4 bg-gray-300 rounded w-20"></div>
+            <div className="h-8 bg-gray-300 rounded w-16"></div>
+            <div className="h-3 bg-gray-300 rounded w-24"></div>
+          </div>
+          <div className="w-12 h-12 bg-gray-300 rounded-lg"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all ${colorClasses[color]}`}
+      className={`rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 ${colors.bg}`}
     >
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-semibold mb-1">{title}</p>
-          <p className="text-2xl font-bold">{value}</p>
-          <div className="flex items-center mt-2">
+        <div className="flex-1">
+          <p className={`text-sm font-semibold mb-2 ${colors.text}`}>{title}</p>
+          <p className={`text-2xl font-bold mb-3 ${colors.text}`}>{value}</p>
+          <div className="flex items-center">
             {trend === "up" ? (
               <TrendingUp className="mr-1 text-green-500" size={16} />
             ) : (
               <TrendingDown className="mr-1 text-red-500" size={16} />
             )}
             <span
-              className={`font-medium ${
-                trend === "up" ? "text-green-600" : "text-red-600"
+              className={`text-sm font-medium ${
+                trend === "up" ? colors.trendUp : colors.trendDown
               }`}
             >
               {change}
             </span>
-            <span className="text-sm text-gray-500 ml-1">vs mois dernier</span>
+            <span className="text-xs text-gray-500 ml-1">vs mois dernier</span>
           </div>
         </div>
-        <div className="p-3 rounded-lg bg-white shadow flex items-center justify-center">
-          <Icon size={24} className={`text-${color}-500`} />
+        <div className="p-3 rounded-lg bg-white shadow-sm flex items-center justify-center ml-4">
+          <Icon size={24} className={colors.icon} />
         </div>
       </div>
     </div>
