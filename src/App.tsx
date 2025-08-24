@@ -141,11 +141,12 @@ function App() {
               </div>
             </div>
           </div>
-
           {/* Formulaires à droite - Version améliorée */}
           <div className="flex-1 flex items-center justify-center p-8 md:p-12">
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-500 transform hover:shadow-2xl">
-              <div className="p-8">
+            <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-500 transform hover:shadow-2xl">
+              <div className="p-10">
+                {" "}
+                {/* padding augmenté */}
                 {showRegister ? (
                   <RegisterPage
                     onRegisterSuccess={() => {
@@ -162,7 +163,7 @@ function App() {
                 )}
               </div>
 
-              <div className="bg-gray-50 p-4 text-center text-sm text-gray-600">
+              <div className="bg-gray-50 p-5 text-center text-sm text-gray-600">
                 {showRegister
                   ? "En vous inscrivant, vous acceptez nos conditions d'utilisation et notre politique de confidentialité."
                   : ""}

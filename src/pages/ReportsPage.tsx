@@ -23,10 +23,63 @@ export default function ReportsPage() {
   const [salesData, setSalesData] = useState<SalesData | null>(null);
   const [expensesData, setExpensesData] = useState<ExpensesData | null>(null);
   const [topProducts, setTopProducts] = useState<Product[]>([]);
+  const [growth, setGrowth] = useState<string>("0%");
+  const [salesGoal, setSalesGoal] = useState<string>("0%");
+  const [customerSatisfaction, setCustomerSatisfaction] =
+    useState<string>("0%");
   const [loading, setLoading] = useState(false);
 
   const baseUrl = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    const fetchReports = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${baseUrl}/api/reports?period=${period}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Erreur API");
+        const data = await res.json();
+        setSalesData(data.sales);
+        setExpensesData(data.expenses);
+        setTopProducts(data.topProducts);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchExtras = async () => {
+      try {
+        const [gRes, sRes, cRes] = await Promise.all([
+          fetch(`${baseUrl}/api/growth?period=${period}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${baseUrl}/api/sales-goal`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${baseUrl}/api/customer-satisfaction`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        const gData = await gRes.json();
+        const sData = await sRes.json();
+        const cData = await cRes.json();
+
+        setGrowth(gData.growth);
+        setSalesGoal(sData.salesGoal);
+        setCustomerSatisfaction(cData.customerSatisfaction);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchReports();
+    fetchExtras();
+  }, [period]);
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -204,32 +257,18 @@ export default function ReportsPage() {
           </div>
           <div className="p-6">
             <div className="space-y-6">
-              {/* Growth */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600">Taux de croissance</span>
-                  <span className="font-semibold text-green-600">
-                    {salesData.growth}
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-green-500 h-2 rounded-full"
-                    style={{ width: salesData.growth.replace("%", "") }}
-                  ></div>
-                </div>
-              </div>
-
               {/* Sales Goal */}
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-600">Objectif de ventes</span>
-                  <span className="font-semibold text-blue-600">85%</span>
+                  <span className="font-semibold text-blue-600">
+                    {salesGoal}
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
                     className="bg-blue-500 h-2 rounded-full"
-                    style={{ width: "85%" }}
+                    style={{ width: salesGoal }}
                   ></div>
                 </div>
               </div>
@@ -238,12 +277,14 @@ export default function ReportsPage() {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-600">Satisfaction client</span>
-                  <span className="font-semibold text-purple-600">92%</span>
+                  <span className="font-semibold text-purple-600">
+                    {customerSatisfaction}
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
                     className="bg-purple-500 h-2 rounded-full"
-                    style={{ width: "92%" }}
+                    style={{ width: customerSatisfaction }}
                   ></div>
                 </div>
               </div>
