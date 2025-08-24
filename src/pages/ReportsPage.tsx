@@ -1,26 +1,54 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Calendar, TrendingUp, Download, BarChart3 } from "lucide-react";
+
+interface SalesData {
+  revenue: number;
+  orders: number;
+  growth: string;
+}
+
+interface ExpensesData {
+  total: number;
+  main: string;
+}
+
+interface Product {
+  name: string;
+  quantity: number;
+  sales: number;
+}
 
 export default function ReportsPage() {
   const [period, setPeriod] = useState("month");
+  const [salesData, setSalesData] = useState<SalesData | null>(null);
+  const [expensesData, setExpensesData] = useState<ExpensesData | null>(null);
+  const [topProducts, setTopProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const salesData = {
-    week: { revenue: 180000, orders: 12, growth: "+8.5%" },
-    month: { revenue: 850000, orders: 65, growth: "+12.3%" },
-    year: { revenue: 9200000, orders: 720, growth: "+18.7%" },
-  };
+  const baseUrl = import.meta.env.VITE_API_URL;
+  const token = localStorage.getItem("token");
 
-  const expensesData = {
-    week: { total: 45000, main: "Matière première: 25000 Ar" },
-    month: { total: 195000, main: "Matière première: 120000 Ar" },
-    year: { total: 2100000, main: "Matière première: 1200000 Ar" },
-  };
+  useEffect(() => {
+    const fetchReports = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${baseUrl}/api/reports?period=${period}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Erreur API");
+        const data = await res.json();
+        setSalesData(data.sales);
+        setExpensesData(data.expenses);
+        setTopProducts(data.topProducts);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const topProducts = [
-    { name: "Chips Ovy", sales: 1200000, quantity: 800 },
-    { name: "Chips Voanjo", sales: 950000, quantity: 650 },
-    { name: "Cacapigeon", sales: 720000, quantity: 400 },
-  ];
+    fetchReports();
+  }, [period]);
 
   const getPeriodLabel = (p: string) => {
     switch (p) {
@@ -33,6 +61,21 @@ export default function ReportsPage() {
       default:
         return "Cette période";
     }
+  };
+
+  if (loading) return <p className="p-6">Chargement des rapports...</p>;
+  if (!salesData || !expensesData) return <p className="p-6">Aucune donnée</p>;
+
+  const handleExport = async () => {
+    const res = await fetch(`${baseUrl}/api/reports/export?period=${period}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `rapport-${period}.pdf`;
+    a.click();
   };
 
   return (
@@ -53,7 +96,7 @@ export default function ReportsPage() {
             <option value="month">Ce mois</option>
             <option value="year">Cette année</option>
           </select>
-          <button className="inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm">
+          <button onClick={handleExport}>
             <Download size={20} className="mr-2" />
             Exporter
           </button>
@@ -67,17 +110,10 @@ export default function ReportsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-100 mb-1">Chiffre d'affaires</p>
-              <p className="text-2xl font-bold">
-                {salesData[
-                  period as keyof typeof salesData
-                ].revenue.toLocaleString()}{" "}
-                Ar
-              </p>
+              <p className="text-2xl font-bold">{salesData.revenue} Ar</p>
               <div className="flex items-center mt-2">
                 <TrendingUp size={16} className="mr-1" />
-                <span className="text-green-100">
-                  {salesData[period as keyof typeof salesData].growth}
-                </span>
+                <span className="text-green-100">{salesData.growth}</span>
               </div>
             </div>
             <BarChart3 size={40} className="text-green-200" />
@@ -89,9 +125,7 @@ export default function ReportsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100 mb-1">Commandes</p>
-              <p className="text-2xl font-bold">
-                {salesData[period as keyof typeof salesData].orders}
-              </p>
+              <p className="text-2xl font-bold">{salesData.orders}</p>
               <p className="text-blue-100 mt-2">{getPeriodLabel(period)}</p>
             </div>
             <Calendar size={40} className="text-blue-200" />
@@ -103,21 +137,15 @@ export default function ReportsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-red-100 mb-1">Dépenses</p>
-              <p className="text-2xl font-bold">
-                {expensesData[
-                  period as keyof typeof expensesData
-                ].total.toLocaleString()}{" "}
-                Ar
-              </p>
-              <p className="text-red-100 text-sm mt-2">
-                {expensesData[period as keyof typeof expensesData].main}
-              </p>
+              <p className="text-2xl font-bold">{expensesData.total} Ar</p>
+              <p className="text-red-100 text-sm mt-2">{expensesData.main}</p>
             </div>
             <TrendingUp size={40} className="text-red-200 rotate-180" />
           </div>
         </div>
       </div>
 
+      {/* Top Products & Performance Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Products */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -176,21 +204,23 @@ export default function ReportsPage() {
           </div>
           <div className="p-6">
             <div className="space-y-6">
+              {/* Growth */}
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-600">Taux de croissance</span>
                   <span className="font-semibold text-green-600">
-                    {salesData[period as keyof typeof salesData].growth}
+                    {salesData.growth}
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
                     className="bg-green-500 h-2 rounded-full"
-                    style={{ width: "75%" }}
+                    style={{ width: salesData.growth.replace("%", "") }}
                   ></div>
                 </div>
               </div>
 
+              {/* Sales Goal */}
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-600">Objectif de ventes</span>
@@ -204,6 +234,7 @@ export default function ReportsPage() {
                 </div>
               </div>
 
+              {/* Customer Satisfaction */}
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-600">Satisfaction client</span>

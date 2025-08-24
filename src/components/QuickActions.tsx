@@ -19,7 +19,7 @@ export default function QuickActions() {
       color: "bg-blue-500",
     },
     {
-      label: "Ajouter produit",
+      label: "Ajouter produit dans Stock",
       type: "stock",
       icon: Package,
       color: "bg-green-500",
@@ -84,7 +84,7 @@ export default function QuickActions() {
       {modalOpen === "stock" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-xl p-6 w-full max-w-lg">
-            <h3 className="text-lg font-semibold mb-4">Ajouter un produit</h3>
+            <h3 className="text-lg font-semibold mb-4">Ajouter dans Stock</h3>
             <StockForm
               stock={editingStock}
               onSaved={handleStockSaved}

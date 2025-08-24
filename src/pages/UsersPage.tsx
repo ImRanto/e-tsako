@@ -165,6 +165,7 @@ export default function UsersPage() {
           <p className="text-gray-600">Gérez vos utilisateurs</p>
         </div>
         <button
+          disabled
           onClick={() => {
             setEditingUser(null);
             setFormData({
@@ -176,7 +177,7 @@ export default function UsersPage() {
             });
             setIsModalOpen(true);
           }}
-          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm"
+          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors shadow-sm bg-gray-400 text-gray-200 cursor-not-allowed opacity-70"
         >
           <Plus size={20} className="mr-2" />
           Nouvel utilisateur

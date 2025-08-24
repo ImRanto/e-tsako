@@ -47,8 +47,8 @@ export default function CustomerForm({
 
     try {
       const url = customer
-        ? `${baseUrl}/api/utilisateurs/${customer.id}`
-        : `${baseUrl}/api/utilisateurs`;
+        ? `${baseUrl}/api/clients/${customer.id}`
+        : `${baseUrl}/api/clients`;
       const method = customer ? "PUT" : "POST";
 
       const res = await fetch(url, {

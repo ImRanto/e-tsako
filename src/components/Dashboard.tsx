@@ -1,10 +1,7 @@
-// Dashboard.tsx
 import { useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import StatCard from "./StatCard";
 import QuickActions from "./QuickActions";
-
-// types.ts
 export interface Stock {
   id: number;
   nomMatiere: string;
@@ -12,7 +9,6 @@ export interface Stock {
   unite: string;
   seuilAlerte: number;
 }
-
 export interface RecentOrder {
   id: number;
   client: string;
@@ -20,14 +16,12 @@ export interface RecentOrder {
   status: "PAYEE" | "EN_ATTENTE" | "LIVREE";
   date: string;
 }
-
 export interface Stats {
   clientsActifs: number;
   produitsEnStock: number;
   chiffreAffaires: number;
   totalCommandes: number;
 }
-
 
 const baseUrl = import.meta.env.VITE_API_URL;
 const app_name = import.meta.env.VITE_APP_NAME;
