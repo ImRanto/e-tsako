@@ -11,6 +11,7 @@ import ReportsPage from "./pages/ReportsPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import UsersPage from "./pages/UsersPage";
+import AdminLoginPage from "./pages/AdminLoginPage";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
@@ -50,14 +51,23 @@ function App() {
 
   return (
     <>
-      {isAuthenticated ? (
+      {isAuthenticated || currentPage === "admin" ? (
         <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
           <Sidebar
             currentPage={currentPage}
             onPageChange={setCurrentPage}
             onLogout={handleLogout}
           />
-          <main className="flex-1 md:ml-64">{renderPage()}</main>
+          <main className="flex-1 md:ml-64">
+            {currentPage === "admin" ? (
+              <AdminLoginPage
+                adminUser={import.meta.env.VITE_ADMIN_USER}
+                adminPassword={import.meta.env.VITE_ADMIN_PASSWORD}
+              />
+            ) : (
+              renderPage()
+            )}
+          </main>
         </div>
       ) : (
         <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-amber-400 to-orange-500">

@@ -50,6 +50,7 @@ export default function Sidebar({
   const [isOpen, setIsOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -168,9 +169,10 @@ export default function Sidebar({
                 {/* Menu dropdown avec animation */}
                 {dropdownOpen && (
                   <div className="absolute bottom-16 left-4 w-48 bg-white border border-gray-200 rounded-xl shadow-lg transform origin-bottom animate-fade-in-up">
-                    {(
+                    {
                       <button
                         onClick={() => {
+                          setIsAuthenticated(true); // active l'affichage de la sidebar et des pages
                           onPageChange("admin");
                           setDropdownOpen(false);
                           setIsOpen(false);
@@ -180,7 +182,7 @@ export default function Sidebar({
                         <Key className="w-4 h-4 mr-2" />
                         Générer une clé
                       </button>
-                    )}
+                    }
                     <button
                       onClick={onLogout}
                       className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"
