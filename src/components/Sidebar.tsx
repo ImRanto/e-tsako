@@ -11,12 +11,14 @@ import {
   Menu,
   X,
   LogOut,
+  Key,
 } from "lucide-react";
 
 interface SidebarProps {
   currentPage: string;
   onPageChange: (page: string) => void;
   onLogout: () => void;
+  isAdmin?: boolean;
 }
 
 interface User {
@@ -163,10 +165,22 @@ export default function Sidebar({
                     </p>
                   </div>
                 </button>
-
                 {/* Menu dropdown avec animation */}
                 {dropdownOpen && (
                   <div className="absolute bottom-16 left-4 w-48 bg-white border border-gray-200 rounded-xl shadow-lg transform origin-bottom animate-fade-in-up">
+                    {(
+                      <button
+                        onClick={() => {
+                          onPageChange("admin");
+                          setDropdownOpen(false);
+                          setIsOpen(false);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
+                      >
+                        <Key className="w-4 h-4 mr-2" />
+                        Générer une clé
+                      </button>
+                    )}
                     <button
                       onClick={onLogout}
                       className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"
