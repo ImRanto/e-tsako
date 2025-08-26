@@ -1,48 +1,58 @@
-import { useState } from "react";
-import { Plus, Search, Megaphone, Facebook, MapPin } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Search, Megaphone, Facebook, MapPin, X } from "lucide-react";
+import MarketingForm from "./../components/MarketingForm";
 
 interface Marketing {
   id: number;
-  canal: "FACEBOOK" | "MARCHE_LOCAL" | "RADIO" | "AFFICHAGE" | "AUTRE";
+  canal: "FACEBOOK" | "MARCHE_LOCAL" | "PARTENARIAT" | "SITE_WEB" | "AUTRE";
   cout: number;
-  date_action: string;
+  dateAction: string;
   description: string;
 }
+
+const baseUrl = import.meta.env.VITE_API_URL;
 
 export default function MarketingPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [canalFilter, setCanalFilter] = useState<string>("");
+  const [marketingActions, setMarketingActions] = useState<Marketing[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [marketingActions] = useState<Marketing[]>([
-    {
-      id: 1,
-      canal: "FACEBOOK",
-      cout: 20000,
-      date_action: "2025-01-15",
-      description: "Campagne Facebook Août 2025",
-    },
-    {
-      id: 2,
-      canal: "MARCHE_LOCAL",
-      cout: 10000,
-      date_action: "2025-01-15",
-      description: "Participation foire artisanale",
-    },
-    {
-      id: 3,
-      canal: "RADIO",
-      cout: 35000,
-      date_action: "2025-01-10",
-      description: "Spot radio RNM",
-    },
-    {
-      id: 4,
-      canal: "AFFICHAGE",
-      cout: 15000,
-      date_action: "2025-01-08",
-      description: "Panneaux publicitaires centre-ville",
-    },
-  ]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingMarketing, setEditingMarketing] = useState<Marketing | null>(
+    null
+  );
+
+  const fetchData = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("Utilisateur non authentifié !");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${baseUrl}/api/marketing`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Erreur lors du chargement des campagnes");
+
+      const data: Marketing[] = await res.json();
+      setMarketingActions(data);
+    } catch (err: any) {
+      setError(err.message || "Erreur inconnue");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const getCanalIcon = (canal: string) => {
     switch (canal) {
@@ -61,9 +71,9 @@ export default function MarketingPage() {
         return "bg-blue-100 text-blue-800";
       case "MARCHE_LOCAL":
         return "bg-green-100 text-green-800";
-      case "RADIO":
+      case "SITE_WEB":
         return "bg-purple-100 text-purple-800";
-      case "AFFICHAGE":
+      case "PARTENARIAT":
         return "bg-orange-100 text-orange-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -76,10 +86,10 @@ export default function MarketingPage() {
         return "Facebook";
       case "MARCHE_LOCAL":
         return "Marché local";
-      case "RADIO":
-        return "Radio";
-      case "AFFICHAGE":
-        return "Affichage";
+      case "SITE_WEB":
+        return "Site Web";
+      case "PATENARIAT":
+        return "Partenariat";
       default:
         return "Autre";
     }
@@ -100,6 +110,18 @@ export default function MarketingPage() {
     0
   );
 
+  if (loading) {
+    return <p className="p-6 text-gray-500">Chargement des campagnes...</p>;
+  }
+
+  if (error) {
+    return (
+      <p className="p-6 text-red-600">
+        ❌ Erreur : {error} (vérifie ton token ou ton backend)
+      </p>
+    );
+  }
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -110,7 +132,13 @@ export default function MarketingPage() {
             Gestion des campagnes et actions marketing
           </p>
         </div>
-        <button className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm">
+        <button
+          onClick={() => {
+            setEditingMarketing(null);
+            setIsModalOpen(true);
+          }}
+          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm"
+        >
           <Plus size={20} className="mr-2" />
           Nouvelle campagne
         </button>
@@ -155,8 +183,8 @@ export default function MarketingPage() {
             <option value="">Tous les canaux</option>
             <option value="FACEBOOK">Facebook</option>
             <option value="MARCHE_LOCAL">Marché local</option>
-            <option value="RADIO">Radio</option>
-            <option value="AFFICHAGE">Affichage</option>
+            <option value="SITE_WEB">Site Web</option>
+            <option value="PATENARIAT">Partenariat</option>
             <option value="AUTRE">Autre</option>
           </select>
         </div>
@@ -171,11 +199,7 @@ export default function MarketingPage() {
           >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center">
-                <div
-                  className={`p-2 rounded-lg ${getCanalColor(action.canal)
-                    .replace("text-", "bg-")
-                    .replace("800", "100")}`}
-                >
+                <div className="p-2 rounded-lg bg-gray-100">
                   {getCanalIcon(action.canal)}
                 </div>
                 <div className="ml-3">
@@ -187,7 +211,7 @@ export default function MarketingPage() {
                     {getCanalLabel(action.canal)}
                   </span>
                   <p className="text-sm text-gray-500 mt-1">
-                    {new Date(action.date_action).toLocaleDateString("fr-FR")}
+                    {new Date(action.dateAction).toLocaleDateString("fr-FR")}
                   </p>
                 </div>
               </div>
@@ -208,13 +232,44 @@ export default function MarketingPage() {
               <button className="flex-1 bg-blue-100 text-blue-700 py-2 px-3 rounded-lg hover:bg-blue-200 transition-colors text-sm">
                 Voir résultats
               </button>
-              <button className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition-colors text-sm">
+              <button
+                onClick={() => {
+                  setEditingMarketing(action);
+                  setIsModalOpen(true);
+                }}
+                className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+              >
                 Modifier
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg relative">
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X size={20} />
+            </button>
+            <h2 className="text-xl font-bold mb-4">
+              {editingMarketing ? "Modifier la campagne" : "Nouvelle campagne"}
+            </h2>
+            <MarketingForm
+              marketing={editingMarketing}
+              onSaved={() => {
+                setIsModalOpen(false);
+                fetchData();
+              }}
+              onCancel={() => setIsModalOpen(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
