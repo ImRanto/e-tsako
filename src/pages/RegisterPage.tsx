@@ -15,7 +15,6 @@ interface RegisterResponse {
   message: string;
 }
 
-const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
 const app_name = import.meta.env.VITE_APP_NAME;
 
 export default function RegisterPage({
@@ -59,27 +58,23 @@ export default function RegisterPage({
       return;
     }
 
-    // Vérifier le mot de passe secret
-    if (secret !== SECRET_KEY) {
-      setError(
-        "Mot de passe secret incorrect ! Veuillez contacter l'administrateur."
-      );
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const res = await fetch(`${baseUrl}/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nom,
-          prenom,
-          email,
-          motDePasse: password,
-          role: "VENTE",
-        }),
-      });
+      const res = await fetch(
+        `${baseUrl}/api/auth/register?activationKey=${encodeURIComponent(
+          secret
+        )}`, // clé envoyée au backend
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nom,
+            prenom,
+            email,
+            motDePasse: password,
+            role: "VENTE", // ou ADMIN selon ton choix
+          }),
+        }
+      );
 
       if (!res.ok) {
         const errText = await res.text();
@@ -91,7 +86,7 @@ export default function RegisterPage({
 
       setSuccess("Compte créé avec succès ! Redirection en cours...");
       setTimeout(() => {
-        onRegisterSuccess(); // connexion automatique après inscription
+        onRegisterSuccess();
       }, 1500);
     } catch (err: any) {
       console.error(err);
