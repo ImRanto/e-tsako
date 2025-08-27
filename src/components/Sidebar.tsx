@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { menuByRole } from "../config/menus";
 import {
   LayoutDashboard,
   Package,
@@ -51,6 +52,8 @@ export default function Sidebar({
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const role = currentUser?.role || "VENTE"; // défaut: VENTE
+  const menuItems = menuByRole[role] || [];
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -125,10 +128,7 @@ export default function Sidebar({
                 return (
                   <li key={item.id}>
                     <button
-                      onClick={() => {
-                        onPageChange(item.id);
-                        setIsOpen(false);
-                      }}
+                      onClick={() => onPageChange(item.id)}
                       className={`w-full flex items-center px-4 py-3 rounded-lg text-left transition-all duration-200 ${
                         isActive
                           ? "bg-amber-50 text-amber-700"
