@@ -1,4 +1,3 @@
-// src/pages/StockPage.tsx
 import { useState, useEffect } from "react";
 import { Plus, Search, AlertTriangle, Package } from "lucide-react";
 import Modal from "../components/Modal";
@@ -35,6 +34,7 @@ export default function StockPage() {
   }, []);
 
   // Sauvegarde (création ou modification)
+  // Sauvegarde (création ou modification)
   const handleSave = async (stockData: Omit<StockData, "id">) => {
     if (!token) return alert("Utilisateur non authentifié !");
     try {
@@ -52,11 +52,6 @@ export default function StockPage() {
         });
 
         if (!res.ok) throw new Error(`Erreur API (${res.status})`);
-
-        const updatedStock = await res.json();
-        setStocks((prev) =>
-          prev.map((s) => (s.id === updatedStock.id ? updatedStock : s))
-        );
       } else {
         // Création
         res = await fetch(`${baseUrl}/api/stocks`, {
@@ -69,12 +64,12 @@ export default function StockPage() {
         });
 
         if (!res.ok) throw new Error(`Erreur API (${res.status})`);
-
-        const newStock = await res.json();
-        setStocks((prev) => [...prev, newStock]);
       }
 
-      // Fermer modal et réinitialiser
+      // ✅ Toujours recharger les stocks après une sauvegarde
+      await fetchStocks();
+
+      // Fermer modal et reset
       setIsModalOpen(false);
       setEditingStock(null);
     } catch (err) {

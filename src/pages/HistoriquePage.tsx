@@ -1,206 +1,171 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
-  Copy,
-  Check,
-  Key,
-  Plus,
-  Trash2,
-  AlertCircle,
   RefreshCw,
   Search,
   Filter,
-  Download,
-  MoreVertical,
-  Eye,
-  EyeOff,
   Calendar,
-  UserCheck,
-  UserX,
+  User,
+  Code,
+  Clock,
+  Download,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  AlertCircle,
 } from "lucide-react";
+
+interface Historique {
+  id: number;
+  dateAction: string;
+  endpoint: string;
+  methode: string;
+  payload: string;
+  utilisateur: string;
+  statusCode?: number;
+  ipAddress?: string;
+}
 
 const baseUrl = import.meta.env.VITE_API_URL;
 
-interface ActivationKey {
-  id: number;
-  keyValue: string;
-  createdAt: string;
-  used: boolean;
-  expiresAt?: string;
-  usedBy?: string;
-  usedAt?: string;
-}
-
-export default function AdminActivationPage() {
-  const [keys, setKeys] = useState<ActivationKey[]>([]);
-  const [filteredKeys, setFilteredKeys] = useState<ActivationKey[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [copiedKeyId, setCopiedKeyId] = useState<number | null>(null);
+export default function HistoriquePage() {
+  const [historiques, setHistoriques] = useState<Historique[]>([]);
+  const [filteredHistoriques, setFilteredHistoriques] = useState<Historique[]>(
+    []
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [showKey, setShowKey] = useState<{ [key: number]: boolean }>({});
-  const token = localStorage.getItem("token");
+  const [methodFilter, setMethodFilter] = useState("all");
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: "asc" | "desc";
+  }>({
+    key: "dateAction",
+    direction: "desc",
+  });
 
-  const fetchKeys = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${baseUrl}/api/activation-keys`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!res.ok) throw new Error("Erreur lors du chargement des clés");
-      const data: ActivationKey[] = await res.json();
-      setKeys(data);
-      setFilteredKeys(data);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
+  const fetchData = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("Utilisateur non authentifié");
       setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchKeys();
-  }, []);
-
-  // Filtrer les clés en fonction de la recherche et du filtre
-  useEffect(() => {
-    let result = keys;
-
-    // Filtre par statut
-    if (statusFilter !== "all") {
-      result = result.filter((key) =>
-        statusFilter === "used" ? key.used : !key.used
-      );
-    }
-
-    // Filtre par recherche
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(
-        (key) =>
-          key.keyValue.toLowerCase().includes(term) ||
-          key.id.toString().includes(term) ||
-          (key.usedBy && key.usedBy.toLowerCase().includes(term))
-      );
-    }
-
-    setFilteredKeys(result);
-  }, [searchTerm, statusFilter, keys]);
-
-  const handleGenerateKey = async () => {
-    setLoading(true);
-    setError("");
-    setSuccess("");
-
-    try {
-      const res = await fetch(`${baseUrl}/api/activation-keys/generate`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || "Erreur lors de la génération");
-      }
-
-      const newKey: ActivationKey = await res.json();
-      setKeys([newKey, ...keys]);
-      setSuccess("Clé d'activation générée avec succès !");
-      setTimeout(() => setSuccess(""), 3000);
-    } catch (err: any) {
-      setError(err.message);
-      setTimeout(() => setError(""), 5000);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUseKey = async (keyValue: string) => {
-    try {
-      const res = await fetch(
-        `${baseUrl}/api/activation-keys/use/${keyValue}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!res.ok) throw new Error("Impossible de consommer la clé");
-      const updated = await res.json();
-      setKeys(
-        keys.map((k) => (k.keyValue === keyValue ? { ...k, used: updated } : k))
-      );
-      setSuccess("Clé consommée avec succès !");
-      setTimeout(() => setSuccess(""), 3000);
-    } catch (err: any) {
-      setError(err.message);
-      setTimeout(() => setError(""), 5000);
-    }
-  };
-
-  const handleDeleteKey = async (id: number) => {
-    if (
-      !window.confirm(
-        "Êtes-vous sûr de vouloir supprimer cette clé ? Cette action est irréversible."
-      )
-    ) {
       return;
     }
 
     try {
-      const res = await fetch(`${baseUrl}/api/activation-keys/${id}`, {
-        method: "DELETE",
+      const res = await fetch(`${baseUrl}/api/historiques`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (!res.ok) throw new Error("Impossible de supprimer la clé");
-      setKeys(keys.filter((k) => k.id !== id));
-      setSuccess("Clé supprimée avec succès !");
-      setTimeout(() => setSuccess(""), 3000);
+
+      if (!res.ok) throw new Error("Erreur lors du chargement des historiques");
+
+      const data: Historique[] = await res.json();
+      setHistoriques(data);
+      setFilteredHistoriques(data);
     } catch (err: any) {
-      setError(err.message);
-      setTimeout(() => setError(""), 5000);
+      setError(err.message || "Erreur inconnue");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const copyToClipboard = (text: string, id: number) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKeyId(id);
-    setTimeout(() => setCopiedKeyId(null), 2000);
-  };
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const toggleKeyVisibility = (id: number) => {
-    setShowKey((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  // Filtrer et trier les données
+  useEffect(() => {
+    let result = historiques;
 
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+    // Appliquer le filtre de recherche
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(
+        (h) =>
+          h.endpoint.toLowerCase().includes(term) ||
+          h.utilisateur.toLowerCase().includes(term) ||
+          h.payload.toLowerCase().includes(term) ||
+          h.methode.toLowerCase().includes(term) ||
+          h.id.toString().includes(term)
+      );
+    }
+
+    // Appliquer le filtre de méthode
+    if (methodFilter !== "all") {
+      result = result.filter((h) => h.methode === methodFilter);
+    }
+
+    // Appliquer le tri
+    result = [...result].sort((a, b) => {
+      if (sortConfig.key === "dateAction") {
+        return sortConfig.direction === "asc"
+          ? new Date(a.dateAction).getTime() - new Date(b.dateAction).getTime()
+          : new Date(b.dateAction).getTime() - new Date(a.dateAction).getTime();
+      }
+      if (sortConfig.key === "id") {
+        return sortConfig.direction === "asc" ? a.id - b.id : b.id - a.id;
+      }
+      return 0;
     });
 
+    setFilteredHistoriques(result);
+  }, [historiques, searchTerm, methodFilter, sortConfig]);
+
+  const handleSort = (key: string) => {
+    setSortConfig((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  const getStatusColor = (statusCode?: number) => {
+    if (!statusCode) return "bg-gray-100 text-gray-700";
+    if (statusCode >= 200 && statusCode < 300)
+      return "bg-green-100 text-green-700";
+    if (statusCode >= 400 && statusCode < 500)
+      return "bg-yellow-100 text-yellow-700";
+    if (statusCode >= 500) return "bg-red-100 text-red-700";
+    return "bg-gray-100 text-gray-700";
+  };
+
+  const getMethodColor = (method: string) => {
+    switch (method) {
+      case "GET":
+        return "bg-blue-100 text-blue-700";
+      case "POST":
+        return "bg-green-100 text-green-700";
+      case "PUT":
+        return "bg-yellow-100 text-yellow-700";
+      case "DELETE":
+        return "bg-red-100 text-red-700";
+      case "PATCH":
+        return "bg-purple-100 text-purple-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  const formatJson = (jsonString: string) => {
+    try {
+      const parsed = JSON.parse(jsonString);
+      return JSON.stringify(parsed, null, 2);
+    } catch {
+      return jsonString;
+    }
+  };
+
   const exportToCSV = () => {
-    const headers =
-      "ID,Clé,Créée le,Statut,Expiration,Utilisé par,Utilisé le\n";
-    const csvContent = keys
+    const headers = "ID,Date,Endpoint,Méthode,Utilisateur,Statut,IP\n";
+    const csvContent = historiques
       .map(
-        (key) =>
-          `${key.id},"${key.keyValue}",${formatDate(key.createdAt)},${
-            key.used ? "Utilisée" : "Active"
-          },"${key.expiresAt || "N/A"}","${key.usedBy || "N/A"}","${
-            key.usedAt ? formatDate(key.usedAt) : "N/A"
+        (h) =>
+          `${h.id},"${new Date(h.dateAction).toLocaleString("fr-FR")}",${
+            h.endpoint
+          },${h.methode},${h.utilisateur},${h.statusCode || "N/A"},${
+            h.ipAddress || "N/A"
           }"`
       )
       .join("\n");
@@ -210,310 +175,298 @@ export default function AdminActivationPage() {
     });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `cles_activation_${
+    link.download = `historique_actions_${
       new Date().toISOString().split("T")[0]
     }.csv`;
     link.click();
   };
 
-  const StatsCard = ({
-    title,
-    value,
-    icon: Icon,
-    color,
-  }: {
-    title: string;
-    value: number;
-    icon: any;
-    color: string;
-  }) => (
-    <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-      <div className="flex items-center">
-        <div className={`p-3 rounded-lg ${color} bg-opacity-10`}>
-          <Icon className={`h-6 w-6 ${color}`} />
-        </div>
-        <div className="ml-4">
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
+  const SortIndicator = ({ columnKey }: { columnKey: string }) => {
+    if (sortConfig.key !== columnKey) return null;
+    return sortConfig.direction === "asc" ? (
+      <ChevronUp className="h-4 w-4 ml-1" />
+    ) : (
+      <ChevronDown className="h-4 w-4 ml-1" />
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <RefreshCw className="h-8 w-8 text-amber-500 animate-spin mx-auto mb-3" />
+              <p className="text-gray-600">Chargement de l'historique...</p>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex items-start">
+            <AlertCircle className="h-6 w-6 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
+            <div>
+              <h3 className="text-lg font-medium text-red-800">
+                Erreur de chargement
+              </h3>
+              <p className="text-red-700">{error}</p>
+              <button
+                onClick={fetchData}
+                className="mt-3 inline-flex items-center px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Réessayer
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen p-6 bg-gray-50">
+    <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 border border-gray-100">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                Gestion des clés d'activation
+                Historique des actions
               </h1>
               <p className="text-gray-600">
-                Générez et gérez les clés d'activation pour votre application
+                Suivi de toutes les actions effectuées sur le système
               </p>
             </div>
-            <button
-              onClick={handleGenerateKey}
-              disabled={loading}
-              className={`mt-4 md:mt-0 inline-flex items-center py-3 px-6 rounded-xl font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all shadow-sm ${
-                loading
-                  ? "bg-amber-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 hover:shadow-md"
-              }`}
-            >
-              {loading ? (
-                <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
-              ) : (
-                <Plus className="h-5 w-5 mr-2" />
-              )}
-              {loading ? "Génération..." : "Nouvelle clé"}
-            </button>
-          </div>
-
-          {/* Stats Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <StatsCard
-              title="Total des clés"
-              value={keys.length}
-              icon={Key}
-              color="text-blue-500"
-            />
-            <StatsCard
-              title="Clés actives"
-              value={keys.filter((k) => !k.used).length}
-              icon={UserCheck}
-              color="text-emerald-500"
-            />
-            <StatsCard
-              title="Clés utilisées"
-              value={keys.filter((k) => k.used).length}
-              icon={UserX}
-              color="text-gray-500"
-            />
-          </div>
-
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start">
-              <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
-              <p className="text-red-700">{error}</p>
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start">
-              <Check className="h-5 w-5 text-emerald-500 mt-0.5 mr-3 flex-shrink-0" />
-              <p className="text-emerald-700">{success}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Filters and Search */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 border border-gray-100">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Rechercher une clé, ID ou utilisateur..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <div className="relative">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="appearance-none pl-10 pr-8 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                >
-                  <option value="all">Tous les statuts</option>
-                  <option value="active">Actives</option>
-                  <option value="used">Utilisées</option>
-                </select>
-                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              </div>
-
+            <div className="flex gap-3 mt-4 md:mt-0">
+              <button
+                onClick={fetchData}
+                className="inline-flex items-center px-4 py-2.5 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Actualiser
+              </button>
               <button
                 onClick={exportToCSV}
-                className="flex items-center px-4 py-2.5 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
-                title="Exporter en CSV"
+                className="inline-flex items-center px-4 py-2.5 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Exporter
               </button>
             </div>
           </div>
+
+          {/* Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Rechercher..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+              />
+            </div>
+
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <select
+                value={methodFilter}
+                onChange={(e) => setMethodFilter(e.target.value)}
+                className="w-full pl-10 pr-8 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+              >
+                <option value="all">Toutes les méthodes</option>
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+                <option value="PATCH">PATCH</option>
+              </select>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-3 flex items-center justify-between">
+              <div className="flex items-center">
+                <Clock className="h-4 w-4 text-gray-400 mr-2" />
+                <span className="text-sm text-gray-600">
+                  Total: {filteredHistoriques.length} actions
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Keys Table */}
+        {/* Table Section */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
-          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Clés d'activation ({filteredKeys.length})
-            </h2>
-          </div>
-
-          {loading ? (
-            <div className="p-12 text-center">
-              <RefreshCw className="h-8 w-8 text-amber-500 animate-spin mx-auto mb-3" />
-              <span className="text-gray-600">Chargement des clés...</span>
-            </div>
-          ) : filteredKeys.length === 0 ? (
-            <div className="p-12 text-center">
-              <Key className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {searchTerm || statusFilter !== "all"
-                  ? "Aucun résultat"
-                  : "Aucune clé d'activation"}
-              </h3>
-              <p className="text-gray-600">
-                {searchTerm || statusFilter !== "all"
-                  ? "Aucune clé ne correspond à vos critères de recherche"
-                  : "Générez votre première clé pour commencer"}
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th
+                    className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort("id")}
+                  >
+                    <div className="flex items-center">
                       ID
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Clé d'activation
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Créée le
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Statut
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Expiration
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {filteredKeys.map((key) => (
+                      <SortIndicator columnKey="id" />
+                    </div>
+                  </th>
+                  <th
+                    className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort("dateAction")}
+                  >
+                    <div className="flex items-center">
+                      Date & Heure
+                      <SortIndicator columnKey="dateAction" />
+                    </div>
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Endpoint
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Méthode
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Utilisateur
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Statut
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredHistoriques.map((h) => (
+                  <>
                     <tr
-                      key={key.id}
+                      key={h.id}
                       className="hover:bg-gray-50 transition-colors"
                     >
-                      <td className="py-4 px-6 whitespace-nowrap text-sm font-medium text-gray-900">
-                        #{key.id}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        #{h.id}
                       </td>
-                      <td className="py-4 px-6 text-sm font-mono text-gray-800">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                         <div className="flex items-center">
-                          <span
-                            className={
-                              showKey[key.id]
-                                ? ""
-                                : "blur-sm hover:blur-none transition-all"
-                            }
-                          >
-                            {showKey[key.id]
-                              ? key.keyValue
-                              : key.keyValue.replace(/./g, "•")}
-                          </span>
-                          <div className="ml-2 flex items-center gap-1">
-                            <button
-                              onClick={() => toggleKeyVisibility(key.id)}
-                              className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                              title={
-                                showKey[key.id]
-                                  ? "Masquer la clé"
-                                  : "Afficher la clé"
-                              }
-                            >
-                              {showKey[key.id] ? (
-                                <EyeOff className="h-4 w-4" />
-                              ) : (
-                                <Eye className="h-4 w-4" />
-                              )}
-                            </button>
-                            <button
-                              onClick={() =>
-                                copyToClipboard(key.keyValue, key.id)
-                              }
-                              className="p-1 text-gray-400 hover:text-amber-600 transition-colors"
-                              title="Copier la clé"
-                            >
-                              {copiedKeyId === key.id ? (
-                                <Check className="h-4 w-4 text-emerald-500" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </button>
-                          </div>
+                          <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                          {new Date(h.dateAction).toLocaleString("fr-FR")}
                         </div>
                       </td>
-                      <td className="py-4 px-6 whitespace-nowrap text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1 text-gray-400" />
-                          {formatDate(key.createdAt)}
-                        </div>
+                      <td className="px-6 py-4 text-sm text-gray-800 max-w-xs truncate">
+                        {h.endpoint}
                       </td>
-                      <td className="py-4 px-6 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors ${
-                            key.used
-                              ? "bg-gray-100 text-gray-800"
-                              : "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
-                          }`}
-                          onClick={() =>
-                            !key.used && handleUseKey(key.keyValue)
-                          }
-                          title={
-                            key.used
-                              ? "Clé déjà utilisée"
-                              : "Cliquer pour consommer"
-                          }
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getMethodColor(
+                            h.methode
+                          )}`}
                         >
-                          {key.used ? (
+                          {h.methode}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 mr-2 text-gray-400" />
+                          {h.utilisateur}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {h.statusCode && (
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                              h.statusCode
+                            )}`}
+                          >
+                            {h.statusCode}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() =>
+                            setExpandedRow(expandedRow === h.id ? null : h.id)
+                          }
+                          className="text-amber-600 hover:text-amber-800 inline-flex items-center"
+                        >
+                          {expandedRow === h.id ? (
                             <>
-                              <UserCheck className="h-3 w-3 mr-1" />
-                              Utilisée
+                              <ChevronUp className="h-4 w-4 mr-1" />
+                              Réduire
                             </>
                           ) : (
                             <>
-                              <Key className="h-3 w-3 mr-1" />
-                              Active
+                              <Code className="h-4 w-4 mr-1" />
+                              Détails
                             </>
                           )}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 whitespace-nowrap text-sm text-gray-600">
-                        {key.expiresAt ? (
-                          <div className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-1 text-gray-400" />
-                            {formatDate(key.expiresAt)}
-                          </div>
-                        ) : (
-                          "N/A"
-                        )}
-                      </td>
-                      <td className="py-4 px-6 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => handleDeleteKey(key.id)}
-                          className="text-red-500 hover:text-red-700 p-1 transition-colors"
-                          title="Supprimer la clé"
-                          disabled={key.used}
-                        >
-                          <Trash2 className="h-4 w-4" />
                         </button>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                    {expandedRow === h.id && (
+                      <tr className="bg-gray-50">
+                        <td colSpan={7} className="px-6 py-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 mb-2">
+                                Payload
+                              </h4>
+                              <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto text-xs">
+                                {formatJson(h.payload)}
+                              </pre>
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 mb-2">
+                                Informations supplémentaires
+                              </h4>
+                              <div className="space-y-2 text-sm">
+                                {h.ipAddress && (
+                                  <p>
+                                    <span className="font-medium">IP:</span>{" "}
+                                    {h.ipAddress}
+                                  </p>
+                                )}
+                                <p>
+                                  <span className="font-medium">
+                                    Timestamp:
+                                  </span>{" "}
+                                  {new Date(h.dateAction).toISOString()}
+                                </p>
+                                <p>
+                                  <span className="font-medium">
+                                    ID de l'action:
+                                  </span>{" "}
+                                  {h.id}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {filteredHistoriques.length === 0 && (
+            <div className="p-12 text-center">
+              <Search className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Aucune action trouvée
+              </h3>
+              <p className="text-gray-600">
+                {searchTerm || methodFilter !== "all"
+                  ? "Aucune action ne correspond à vos critères de recherche"
+                  : "Aucune action n'a été enregistrée pour le moment"}
+              </p>
             </div>
           )}
         </div>
