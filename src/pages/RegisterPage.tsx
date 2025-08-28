@@ -71,7 +71,7 @@ export default function RegisterPage({
             prenom,
             email,
             motDePasse: password,
-            role: "ADMIN", // ou "VENTE" selon le cas
+            role: "VENTE", // ou "VENTE" selon le cas
           }),
         }
       );
