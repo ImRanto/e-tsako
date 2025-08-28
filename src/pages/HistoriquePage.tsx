@@ -10,7 +10,6 @@ import {
   Download,
   ChevronDown,
   ChevronUp,
-  ExternalLink,
   AlertCircle,
 } from "lucide-react";
 
@@ -21,7 +20,6 @@ interface Historique {
   methode: string;
   payload: string;
   utilisateur: string;
-  statusCode?: number;
   ipAddress?: string;
 }
 
@@ -121,16 +119,6 @@ export default function HistoriquePage() {
     }));
   };
 
-  const getStatusColor = (statusCode?: number) => {
-    if (!statusCode) return "bg-gray-100 text-gray-700";
-    if (statusCode >= 200 && statusCode < 300)
-      return "bg-green-100 text-green-700";
-    if (statusCode >= 400 && statusCode < 500)
-      return "bg-yellow-100 text-yellow-700";
-    if (statusCode >= 500) return "bg-red-100 text-red-700";
-    return "bg-gray-100 text-gray-700";
-  };
-
   const getMethodColor = (method: string) => {
     switch (method) {
       case "GET":
@@ -164,7 +152,7 @@ export default function HistoriquePage() {
         (h) =>
           `${h.id},"${new Date(h.dateAction).toLocaleString("fr-FR")}",${
             h.endpoint
-          },${h.methode},${h.utilisateur},${h.statusCode || "N/A"},${
+          },${h.methode},${h.utilisateur},${
             h.ipAddress || "N/A"
           }"`
       )
@@ -336,9 +324,6 @@ export default function HistoriquePage() {
                     Utilisateur
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Statut
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -376,17 +361,6 @@ export default function HistoriquePage() {
                           <User className="h-4 w-4 mr-2 text-gray-400" />
                           {h.utilisateur}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {h.statusCode && (
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                              h.statusCode
-                            )}`}
-                          >
-                            {h.statusCode}
-                          </span>
-                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
