@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   RefreshCw,
   Search,
@@ -330,9 +330,8 @@ export default function HistoriquePage() {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredHistoriques.map((h) => (
-                  <>
+                  <React.Fragment key={h.id}>
                     <tr
-                      key={h.id}
                       className="hover:bg-gray-50 transition-colors"
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -424,7 +423,7 @@ export default function HistoriquePage() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
