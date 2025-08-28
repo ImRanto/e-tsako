@@ -13,6 +13,7 @@ interface RegisterResponse {
   email: string;
   role: string;
   message: string;
+  token: string;
 }
 
 const app_name = import.meta.env.VITE_APP_NAME;
@@ -43,7 +44,6 @@ export default function RegisterPage({
     setSuccess("");
     setIsLoading(true);
 
-    // Vérifier que tous les champs sont remplis
     if (!nom || !prenom || !email || !password || !secret) {
       setError("Veuillez remplir tous les champs !");
       setIsLoading(false);
@@ -52,7 +52,7 @@ export default function RegisterPage({
 
     if (!isPasswordStrong(password)) {
       setError(
-        "Le mot de passe doit contenir au moins 8 caractères, avec des majuscules, minuscules et chiffres."
+        "Mot de passe faible. Minimum 8 caractères, 1 maj, 1 min, 1 chiffre."
       );
       setIsLoading(false);
       return;
@@ -62,7 +62,7 @@ export default function RegisterPage({
       const res = await fetch(
         `${baseUrl}/api/auth/register?activationKey=${encodeURIComponent(
           secret
-        )}`, // clé envoyée au backend
+        )}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -71,7 +71,7 @@ export default function RegisterPage({
             prenom,
             email,
             motDePasse: password,
-            role: "VENTE", // ou ADMIN selon ton choix
+            role: "ADMIN", // ou "VENTE" selon le cas
           }),
         }
       );
@@ -84,10 +84,14 @@ export default function RegisterPage({
       const data: RegisterResponse = await res.json();
       console.log("Utilisateur inscrit :", data);
 
-      setSuccess("Compte créé avec succès ! Redirection en cours...");
+      // ✅ Sauvegarde du token et utilisateur
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data));
+
+      setSuccess("Compte créé et connecté avec succès !");
       setTimeout(() => {
-        onRegisterSuccess();
-      }, 1500);
+        onRegisterSuccess(); // => met isAuthenticated à true
+      }, 1000);
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Erreur lors de l'inscription");
@@ -95,7 +99,6 @@ export default function RegisterPage({
       setIsLoading(false);
     }
   };
-
   // bouton désactivé si un champ est vide
   const isFormIncomplete = !nom || !prenom || !email || !password || !secret;
 
