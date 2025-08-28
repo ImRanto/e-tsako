@@ -7,6 +7,7 @@ import {
   Archive,
   Megaphone,
   BarChart3,
+  HistoryIcon,
 } from "lucide-react";
 
 export const menuByRole: Record<string, any[]> = {
@@ -20,6 +21,7 @@ export const menuByRole: Record<string, any[]> = {
     { id: "stock", label: "Stock", icon: Archive },
     { id: "marketing", label: "Marketing", icon: Megaphone },
     { id: "reports", label: "Rapports", icon: BarChart3 },
+    { id: "history", label: "History", icon: HistoryIcon },
   ],
   PRODUCTION: [
     { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },

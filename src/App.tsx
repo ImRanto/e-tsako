@@ -12,6 +12,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import UsersPage from "./pages/UsersPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
+import HistoriquePage from "./pages/HistoriquePage";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
@@ -39,6 +40,8 @@ function App() {
         return <MarketingPage />;
       case "reports":
         return <ReportsPage />;
+      case "history":
+        return <HistoriquePage />;
       default:
         return <Dashboard />;
     }
