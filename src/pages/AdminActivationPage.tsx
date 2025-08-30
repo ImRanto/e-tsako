@@ -377,143 +377,283 @@ export default function AdminActivationPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ID
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Clé d'activation
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Créée le
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Statut
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Expiration
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {filteredKeys.map((key) => (
-                    <tr
-                      key={key.id}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="py-4 px-6 whitespace-nowrap text-sm font-medium text-gray-900">
-                        #{key.id}
-                      </td>
-                      <td className="py-4 px-6 text-sm font-mono text-gray-800">
-                        <div className="flex items-center">
-                          <span
-                            className={
-                              showKey[key.id]
-                                ? ""
-                                : "blur-sm hover:blur-none transition-all"
-                            }
-                          >
-                            {showKey[key.id]
-                              ? key.keyValue
-                              : key.keyValue.replace(/./g, "•")}
-                          </span>
-                          <div className="ml-2 flex items-center gap-1">
-                            <button
-                              onClick={() => toggleKeyVisibility(key.id)}
-                              className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                              title={
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+              {/* Desktop Table (hidden on mobile) */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        ID
+                      </th>
+                      <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Clé d'activation
+                      </th>
+                      <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Créée le
+                      </th>
+                      <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Statut
+                      </th>
+                      <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Expiration
+                      </th>
+                      <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {filteredKeys.map((key) => (
+                      <tr
+                        key={key.id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="py-4 px-6 whitespace-nowrap text-sm font-medium text-gray-900">
+                          #{key.id}
+                        </td>
+                        <td className="py-4 px-6 text-sm font-mono text-gray-800">
+                          <div className="flex items-center">
+                            <span
+                              className={
                                 showKey[key.id]
-                                  ? "Masquer la clé"
-                                  : "Afficher la clé"
+                                  ? ""
+                                  : "blur-sm hover:blur-none transition-all"
                               }
                             >
-                              {showKey[key.id] ? (
-                                <EyeOff className="h-4 w-4" />
-                              ) : (
-                                <Eye className="h-4 w-4" />
-                              )}
-                            </button>
-                            <button
-                              onClick={() =>
-                                copyToClipboard(key.keyValue, key.id)
-                              }
-                              className="p-1 text-gray-400 hover:text-amber-600 transition-colors"
-                              title="Copier la clé"
-                            >
-                              {copiedKeyId === key.id ? (
-                                <Check className="h-4 w-4 text-emerald-500" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </button>
+                              {showKey[key.id]
+                                ? key.keyValue
+                                : key.keyValue.replace(/./g, "•")}
+                            </span>
+                            <div className="ml-2 flex items-center gap-1">
+                              <button
+                                onClick={() => toggleKeyVisibility(key.id)}
+                                className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                title={
+                                  showKey[key.id]
+                                    ? "Masquer la clé"
+                                    : "Afficher la clé"
+                                }
+                              >
+                                {showKey[key.id] ? (
+                                  <EyeOff className="h-4 w-4" />
+                                ) : (
+                                  <Eye className="h-4 w-4" />
+                                )}
+                              </button>
+                              <button
+                                onClick={() =>
+                                  copyToClipboard(key.keyValue, key.id)
+                                }
+                                className="p-1 text-gray-400 hover:text-amber-600 transition-colors"
+                                title="Copier la clé"
+                              >
+                                {copiedKeyId === key.id ? (
+                                  <Check className="h-4 w-4 text-emerald-500" />
+                                ) : (
+                                  <Copy className="h-4 w-4" />
+                                )}
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 whitespace-nowrap text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1 text-gray-400" />
-                          {formatDate(key.createdAt)}
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors ${
-                            key.used
-                              ? "bg-gray-100 text-gray-800"
-                              : "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
-                          }`}
-                          onClick={() =>
-                            !key.used && handleUseKey(key.keyValue)
-                          }
-                          title={
-                            key.used
-                              ? "Clé déjà utilisée"
-                              : "Cliquer pour consommer"
-                          }
-                        >
-                          {key.used ? (
-                            <>
-                              <UserCheck className="h-3 w-3 mr-1" />
-                              Utilisée
-                            </>
-                          ) : (
-                            <>
-                              <Key className="h-3 w-3 mr-1" />
-                              Active
-                            </>
-                          )}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 whitespace-nowrap text-sm text-gray-600">
-                        {key.expiresAt ? (
+                        </td>
+                        <td className="py-4 px-6 whitespace-nowrap text-sm text-gray-600">
                           <div className="flex items-center">
                             <Calendar className="h-4 w-4 mr-1 text-gray-400" />
-                            {formatDate(key.expiresAt)}
+                            {formatDate(key.createdAt)}
                           </div>
+                        </td>
+                        <td className="py-4 px-6 whitespace-nowrap">
+                          <span
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors ${
+                              key.used
+                                ? "bg-gray-100 text-gray-800"
+                                : "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
+                            }`}
+                            onClick={() =>
+                              !key.used && handleUseKey(key.keyValue)
+                            }
+                            title={
+                              key.used
+                                ? "Clé déjà utilisée"
+                                : "Cliquer pour consommer"
+                            }
+                          >
+                            {key.used ? (
+                              <>
+                                <UserCheck className="h-3 w-3 mr-1" />
+                                Utilisée
+                              </>
+                            ) : (
+                              <>
+                                <Key className="h-3 w-3 mr-1" />
+                                Active
+                              </>
+                            )}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 whitespace-nowrap text-sm text-gray-600">
+                          {key.expiresAt ? (
+                            <div className="flex items-center">
+                              <Calendar className="h-4 w-4 mr-1 text-gray-400" />
+                              {formatDate(key.expiresAt)}
+                            </div>
+                          ) : (
+                            "N/A"
+                          )}
+                        </td>
+                        <td className="py-4 px-6 whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={() => handleDeleteKey(key.id)}
+                            className="text-red-500 hover:text-red-700 p-1 transition-colors"
+                            title="Supprimer la clé"
+                            disabled={key.used}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Cards (shown on mobile) */}
+              <div className="md:hidden divide-y divide-gray-200">
+                {filteredKeys.map((key) => (
+                  <div
+                    key={key.id}
+                    className="p-4 hover:bg-gray-50 transition-colors"
+                  >
+                    {/* Header avec ID et statut */}
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-medium text-gray-900">
+                        #{key.id}
+                      </span>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                          key.used
+                            ? "bg-gray-100 text-gray-800"
+                            : "bg-emerald-100 text-emerald-800"
+                        }`}
+                      >
+                        {key.used ? (
+                          <>
+                            <UserCheck className="h-3 w-3 mr-1" />
+                            Utilisée
+                          </>
                         ) : (
-                          "N/A"
+                          <>
+                            <Key className="h-3 w-3 mr-1" />
+                            Active
+                          </>
                         )}
-                      </td>
-                      <td className="py-4 px-6 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => handleDeleteKey(key.id)}
-                          className="text-red-500 hover:text-red-700 p-1 transition-colors"
-                          title="Supprimer la clé"
-                          disabled={key.used}
+                      </span>
+                    </div>
+
+                    {/* Clé d'activation */}
+                    <div className="mb-3">
+                      <label className="block text-xs font-medium text-gray-500 mb-1">
+                        Clé d'activation
+                      </label>
+                      <div className="flex items-center justify-between bg-gray-50 rounded-lg p-2">
+                        <span
+                          className={`font-mono text-sm ${
+                            showKey[key.id] ? "" : "blur-sm"
+                          }`}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          {showKey[key.id]
+                            ? key.keyValue
+                            : key.keyValue.replace(/./g, "•")}
+                        </span>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => toggleKeyVisibility(key.id)}
+                            className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                            title={showKey[key.id] ? "Masquer" : "Afficher"}
+                          >
+                            {showKey[key.id] ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() =>
+                              copyToClipboard(key.keyValue, key.id)
+                            }
+                            className="p-1 text-gray-400 hover:text-amber-600 transition-colors"
+                            title="Copier"
+                          >
+                            {copiedKeyId === key.id ? (
+                              <Check className="h-4 w-4 text-emerald-500" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Dates */}
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">
+                          Créée le
+                        </label>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Calendar className="h-3 w-3 mr-1 text-gray-400" />
+                          {formatDate(key.createdAt)}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">
+                          Expiration
+                        </label>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Calendar className="h-3 w-3 mr-1 text-gray-400" />
+                          {key.expiresAt ? formatDate(key.expiresAt) : "N/A"}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                      {!key.used && (
+                        <button
+                          onClick={() => handleUseKey(key.keyValue)}
+                          className="text-xs text-emerald-600 hover:text-emerald-800 font-medium"
+                        >
+                          Marquer comme utilisée
                         </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      )}
+                      <button
+                        onClick={() => handleDeleteKey(key.id)}
+                        className="p-1 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Supprimer la clé"
+                        disabled={key.used}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* États vides */}
+              {filteredKeys.length === 0 && (
+                <div className="p-8 text-center">
+                  <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <Key className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Aucune clé trouvée
+                  </h3>
+                  <p className="text-gray-500">
+                    Aucune clé ne correspond à vos critères de recherche
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
