@@ -11,6 +11,11 @@ import {
   Download,
   ChevronDown,
   ChevronUp,
+  BarChart3,
+  RefreshCw,
+  DollarSign,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import Modal from "../components/Modal";
 import ExpenseForm from "../components/ExpensesForm";
@@ -34,6 +39,7 @@ export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("");
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +48,7 @@ export default function ExpensesPage() {
     direction: "ascending" | "descending";
   } | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [showStats, setShowStats] = useState(false);
 
   // Fetch des dépenses
   const fetchExpenses = () => {
@@ -172,7 +179,15 @@ export default function ExpensesPage() {
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === "" || expense.typeDepense === typeFilter;
-    return matchesSearch && matchesType;
+
+    // Filtre par date
+    const expenseDate = new Date(expense.dateDepense);
+    const matchesStartDate =
+      !dateRange.start || expenseDate >= new Date(dateRange.start);
+    const matchesEndDate =
+      !dateRange.end || expenseDate <= new Date(dateRange.end + "T23:59:59");
+
+    return matchesSearch && matchesType && matchesStartDate && matchesEndDate;
   });
 
   // Total des dépenses
@@ -180,6 +195,17 @@ export default function ExpensesPage() {
     (sum, expense) => sum + expense.montant,
     0
   );
+
+  // Statistiques par type
+  const expensesByType = filteredExpenses.reduce((acc, expense) => {
+    const type = expense.typeDepense;
+    if (!acc[type]) {
+      acc[type] = { total: 0, count: 0 };
+    }
+    acc[type].total += expense.montant;
+    acc[type].count += 1;
+    return acc;
+  }, {} as Record<string, { total: number; count: number }>);
 
   const sortedExpenses = [...filteredExpenses];
   if (sortConfig !== null) {
@@ -221,11 +247,44 @@ export default function ExpensesPage() {
     );
   };
 
+  const clearFilters = () => {
+    setSearchTerm("");
+    setTypeFilter("");
+    setDateRange({ start: "", end: "" });
+  };
+
+  const hasActiveFilters =
+    searchTerm || typeFilter || dateRange.start || dateRange.end;
+
+  const StatsCard = ({
+    title,
+    value,
+    icon: Icon,
+    color,
+  }: {
+    title: string;
+    value: string;
+    icon: any;
+    color: string;
+  }) => (
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div className="flex items-center">
+        <div className={`p-2 rounded-lg ${color} bg-opacity-10`}>
+          <Icon className={`h-5 w-5 ${color}`} />
+        </div>
+        <div className="ml-3">
+          <p className="text-sm font-medium text-gray-600">{title}</p>
+          <p className="text-lg font-bold text-gray-900">{value}</p>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
               Dépenses
@@ -233,16 +292,20 @@ export default function ExpensesPage() {
             <p className="text-gray-600">Suivi des dépenses d'exploitation</p>
           </div>
           <div className="flex gap-3 mt-4 md:mt-0">
-            <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm">
-              <Download size={18} className="mr-2" />
-              Exporter
+            <button
+              onClick={() => setShowStats(!showStats)}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              <BarChart3 size={18} className="mr-2" />
+              {showStats ? "Masquer stats" : "Afficher stats"}
             </button>
             <button
               onClick={openCreateModal}
               className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all shadow-md hover:shadow-lg"
             >
               <Plus size={20} className="mr-2" />
-              Nouvelle dépense
+              <span className="hidden sm:inline">Nouvelle dépense</span>
+              <span className="sm:hidden">Nouvelle</span>
             </button>
           </div>
         </div>
@@ -252,7 +315,7 @@ export default function ExpensesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-red-100 mb-1">Total des dépenses filtrées</p>
-              <p className="text-3xl font-bold">
+              <p className="text-2xl md:text-3xl font-bold">
                 {totalExpenses.toLocaleString()} Ar
               </p>
               <p className="text-red-100 mt-2 text-sm">
@@ -265,6 +328,27 @@ export default function ExpensesPage() {
             </div>
           </div>
         </div>
+
+        {/* Statistics Cards - Responsive Grid */}
+        {showStats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <StatsCard
+              title="Total général"
+              value={`${totalExpenses.toLocaleString()} Ar`}
+              icon={DollarSign}
+              color="text-red-500"
+            />
+            {Object.entries(expensesByType).map(([type, data]) => (
+              <StatsCard
+                key={type}
+                title={getTypeLabel(type)}
+                value={`${data.total.toLocaleString()} Ar`}
+                icon={DollarSign}
+                color="text-blue-500"
+              />
+            ))}
+          </div>
+        )}
 
         {/* Filters Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
@@ -300,7 +384,7 @@ export default function ExpensesPage() {
 
             {/* Filtres avancés (responsive) */}
             <div className={`${isFilterOpen ? "block" : "hidden"} sm:block`}>
-              <div className="flex flex-col sm:flex-row gap-4 pt-4 sm:pt-0 border-t border-gray-200 sm:border-t-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 sm:pt-0 border-t border-gray-200 sm:border-t-0">
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
@@ -314,155 +398,238 @@ export default function ExpensesPage() {
                   <option value="AUTRE">Autre</option>
                 </select>
 
-                <div className="flex gap-2">
-                  <input
-                    type="date"
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors"
-                    placeholder="Date de début"
-                  />
-                  <input
-                    type="date"
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors"
-                    placeholder="Date de fin"
-                  />
-                </div>
+                <input
+                  type="date"
+                  value={dateRange.start}
+                  onChange={(e) =>
+                    setDateRange({ ...dateRange, start: e.target.value })
+                  }
+                  className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors"
+                  placeholder="Date de début"
+                />
 
-                {(typeFilter || searchTerm) && (
+                <input
+                  type="date"
+                  value={dateRange.end}
+                  onChange={(e) =>
+                    setDateRange({ ...dateRange, end: e.target.value })
+                  }
+                  className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors"
+                  placeholder="Date de fin"
+                />
+
+                <div className="flex gap-2">
+                  {hasActiveFilters && (
+                    <button
+                      onClick={clearFilters}
+                      className="flex-1 inline-flex items-center justify-center px-4 py-3 text-gray-700 hover:text-gray-900 transition-colors border border-gray-300 rounded-xl"
+                    >
+                      <X size={18} className="mr-2" />
+                      Réinitialiser
+                    </button>
+                  )}
                   <button
-                    onClick={() => {
-                      setTypeFilter("");
-                      setSearchTerm("");
-                    }}
-                    className="inline-flex items-center justify-center px-4 py-3 text-gray-700 hover:text-gray-900 transition-colors"
+                    onClick={fetchExpenses}
+                    className="inline-flex items-center justify-center px-4 py-3 border border-gray-300 rounded-xl text-gray-700 bg-white hover:bg-gray-50"
+                    title="Actualiser"
                   >
-                    <X size={18} className="mr-2" />
-                    Réinitialiser
+                    <RefreshCw size={18} />
                   </button>
-                )}
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Expenses Table */}
+        {/* Expenses Table - Mobile Optimized */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           {isLoading ? (
-            <div className="p-12 text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-amber-500"></div>
-              <p className="mt-4 text-gray-500">Chargement des dépenses...</p>
+            <div className="p-8 text-center">
+              <RefreshCw className="h-8 w-8 text-amber-500 animate-spin mx-auto mb-3" />
+              <p className="text-gray-500">Chargement des dépenses...</p>
             </div>
           ) : filteredExpenses.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <Search size={24} className="text-gray-400" />
+            <div className="p-6 text-center">
+              <div className="mx-auto w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                <Search size={20} className="text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">
+              <h3 className="text-base font-medium text-gray-900 mb-1">
                 Aucune dépense trouvée
               </h3>
-              <p className="text-gray-500">
-                {searchTerm || typeFilter
-                  ? "Essayez de modifier vos critères de recherche"
-                  : "Commencez par ajouter votre première dépense"}
+              <p className="text-sm text-gray-500 mb-4">
+                {hasActiveFilters
+                  ? "Modifiez vos critères de recherche"
+                  : "Ajoutez votre première dépense"}
               </p>
-              {!searchTerm && !typeFilter && (
+              {hasActiveFilters ? (
+                <button
+                  onClick={clearFilters}
+                  className="inline-flex items-center px-3 py-1.5 text-sm text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  <X size={16} className="mr-1.5" />
+                  Réinitialiser
+                </button>
+              ) : (
                 <button
                   onClick={openCreateModal}
-                  className="mt-6 inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+                  className="inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors text-sm"
                 >
-                  <Plus size={20} className="mr-2" />
+                  <Plus size={18} className="mr-1.5" />
                   Nouvelle dépense
                 </button>
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th
-                      className="px-4 md:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                      onClick={() => handleSort("dateDepense")}
-                    >
-                      <div className="flex items-center">
-                        Date
-                        <SortIcon columnKey="dateDepense" />
-                      </div>
-                    </th>
-                    <th className="px-4 md:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th className="px-4 md:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Description
-                    </th>
-                    <th
-                      className="px-4 md:px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                      onClick={() => handleSort("montant")}
-                    >
-                      <div className="flex items-center justify-end">
-                        Montant
-                        <SortIcon columnKey="montant" />
-                      </div>
-                    </th>
-                    <th className="px-4 md:px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {sortedExpenses.map((expense) => (
-                    <tr
-                      key={expense.id}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <>
+              {/* Desktop Table (hidden on mobile) */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                        onClick={() => handleSort("dateDepense")}
+                      >
                         <div className="flex items-center">
-                          <Calendar
-                            size={16}
-                            className="text-gray-400 mr-2 flex-shrink-0"
-                          />
+                          Date
+                          <SortIcon columnKey="dateDepense" />
+                        </div>
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Type
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Description
+                      </th>
+                      <th
+                        className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                        onClick={() => handleSort("montant")}
+                      >
+                        <div className="flex items-center justify-end">
+                          Montant
+                          <SortIcon columnKey="montant" />
+                        </div>
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {sortedExpenses.map((expense) => (
+                      <tr
+                        key={expense.id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <div className="flex items-center">
+                            <Calendar
+                              size={16}
+                              className="text-gray-400 mr-2 flex-shrink-0"
+                            />
+                            {new Date(expense.dateDepense).toLocaleDateString(
+                              "fr-FR"
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getTypeColor(
+                              expense.typeDepense
+                            )}`}
+                          >
+                            {getTypeLabel(expense.typeDepense)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
+                          {expense.description}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-red-600">
+                          -{expense.montant.toLocaleString()} Ar
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              onClick={() => openEditModal(expense)}
+                              className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                              aria-label="Modifier"
+                            >
+                              <Edit size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(expense.id)}
+                              className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                              aria-label="Supprimer"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Cards (shown on mobile) */}
+              <div className="md:hidden divide-y divide-gray-200">
+                {sortedExpenses.map((expense) => (
+                  <div
+                    key={expense.id}
+                    className="p-4 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center">
+                        <Calendar
+                          size={16}
+                          className="text-gray-400 mr-2 mt-0.5 flex-shrink-0"
+                        />
+                        <span className="text-sm font-medium text-gray-900">
                           {new Date(expense.dateDepense).toLocaleDateString(
                             "fr-FR"
                           )}
-                        </div>
-                      </td>
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getTypeColor(
-                            expense.typeDepense
-                          )}`}
-                        >
-                          {getTypeLabel(expense.typeDepense)}
                         </span>
-                      </td>
-                      <td className="px-4 md:px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                      </div>
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getTypeColor(
+                          expense.typeDepense
+                        )}`}
+                      >
+                        {getTypeLabel(expense.typeDepense)}
+                      </span>
+                    </div>
+
+                    <div className="mb-3">
+                      <p className="text-sm text-gray-700 line-clamp-2">
                         {expense.description}
-                      </td>
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-red-600">
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-red-600">
                         -{expense.montant.toLocaleString()} Ar
-                      </td>
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex gap-2 justify-end">
-                          <button
-                            onClick={() => openEditModal(expense)}
-                            className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-                            aria-label="Modifier"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(expense.id)}
-                            className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
-                            aria-label="Supprimer"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </span>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => openEditModal(expense)}
+                          className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                          aria-label="Modifier"
+                        >
+                          <Edit size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(expense.id)}
+                          className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                          aria-label="Supprimer"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
 
