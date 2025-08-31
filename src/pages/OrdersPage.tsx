@@ -62,14 +62,6 @@ export default function OrdersPage() {
 
   useEffect(() => {
     if (!token) return;
-
-    // 🔹 Vérification du rôle
-    // if (role !== "MARKETING" && role !== "PRODUCTION") {
-    //   console.error("Vous n'avez pas les droits pour accéder aux commandes");
-    //   setLoading(false);
-    //   return;
-    // }
-
     setLoading(true);
     fetch(`${baseUrl}/api/commandes/mes-commandes`, {
       headers: { Authorization: `Bearer ${token}` },
