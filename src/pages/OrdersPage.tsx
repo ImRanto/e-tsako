@@ -13,6 +13,12 @@ import {
 } from "lucide-react";
 import OrderForm from "../components/OrderForm";
 import Modal from "../components/Modal";
+import { jwtDecode } from "jwt-decode";
+
+interface DecodedToken {
+  sub: string;
+  role: string[]; // ou authorities selon ton backend
+}
 
 interface Client {
   id: number;
@@ -63,7 +69,18 @@ export default function OrdersPage() {
   useEffect(() => {
     if (!token) return;
     setLoading(true);
-    fetch(`${baseUrl}/api/commandes/mes-commandes`, {
+
+    // if (token) {
+    // const decoded: DecodedToken = jwtDecode(token);
+    // console.log("Décodage JWT :", decoded);
+    // localStorage.setItem("role", decoded.role[0]);
+    // }
+    const endpoint =
+      role === "A"
+        ? `${baseUrl}/api/commandes` // Admin -> toutes les commandes
+        : `${baseUrl}/api/commandes/mes-commandes`; // Autres -> seulement les leurs
+
+    fetch(endpoint, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
