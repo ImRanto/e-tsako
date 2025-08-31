@@ -58,12 +58,20 @@ export default function OrdersPage() {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
 
-  // 🔹 Récupération initiale
   useEffect(() => {
     if (!token) return;
+
+    // 🔹 Vérification du rôle
+    // if (role !== "MARKETING" && role !== "PRODUCTION") {
+    //   console.error("Vous n'avez pas les droits pour accéder aux commandes");
+    //   setLoading(false);
+    //   return;
+    // }
+
     setLoading(true);
-    fetch(`${baseUrl}/api/commandes`, {
+    fetch(`${baseUrl}/api/commandes/mes-commandes`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -75,7 +83,7 @@ export default function OrdersPage() {
       })
       .catch((err) => console.error("Erreur fetch commandes:", err))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [token, role]);
 
   const openCreateModal = () => {
     setEditingOrder(null);
