@@ -42,8 +42,10 @@ export default function HistoriquePage() {
     key: "dateAction",
     direction: "desc",
   });
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
-  const fetchData = async () => {
+  const fetchData = async (pageNumber = 0) => {
     const token = localStorage.getItem("token");
     if (!token) {
       setError("Utilisateur non authentifié");
@@ -52,23 +54,28 @@ export default function HistoriquePage() {
     }
 
     try {
-      const res = await fetch(`${baseUrl}/api/historiques`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetch(
+        `${baseUrl}/api/historiques?page=${pageNumber}&size=10`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (!res.ok) throw new Error("Erreur lors du chargement des historiques");
 
-      const data: Historique[] = await res.json();
-      setHistoriques(data);
-      setFilteredHistoriques(data);
+      const data = await res.json();
+
+      setHistoriques(data.content || []);
+      setFilteredHistoriques(data.content || []);
+      setPage(data.number); // page actuelle
+      setTotalPages(data.totalPages); // nb total de pages
     } catch (err: any) {
       setError(err.message || "Erreur inconnue");
     } finally {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     fetchData();
@@ -152,9 +159,7 @@ export default function HistoriquePage() {
         (h) =>
           `${h.id},"${new Date(h.dateAction).toLocaleString("fr-FR")}",${
             h.endpoint
-          },${h.methode},${h.utilisateur},${
-            h.ipAddress || "N/A"
-          }"`
+          },${h.methode},${h.utilisateur},${h.ipAddress || "N/A"}"`
       )
       .join("\n");
 
@@ -331,9 +336,7 @@ export default function HistoriquePage() {
               <tbody className="divide-y divide-gray-200">
                 {filteredHistoriques.map((h) => (
                   <React.Fragment key={h.id}>
-                    <tr
-                      className="hover:bg-gray-50 transition-colors"
-                    >
+                    <tr className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         #{h.id}
                       </td>
@@ -428,6 +431,27 @@ export default function HistoriquePage() {
               </tbody>
             </table>
           </div>
+          {totalPages > 1 && (
+            <div className="flex justify-between items-center px-6 py-4 bg-gray-50 border-t">
+              <button
+                onClick={() => fetchData(page - 1)}
+                disabled={page === 0}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg disabled:opacity-50"
+              >
+                Précédent
+              </button>
+              <span className="text-sm text-gray-600">
+                Page {page + 1} sur {totalPages}
+              </span>
+              <button
+                onClick={() => fetchData(page + 1)}
+                disabled={page + 1 >= totalPages}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg disabled:opacity-50"
+              >
+                Suivant
+              </button>
+            </div>
+          )}
 
           {filteredHistoriques.length === 0 && (
             <div className="p-12 text-center">

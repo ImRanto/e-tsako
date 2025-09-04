@@ -4,9 +4,7 @@ import {
   Users,
   Package,
   TrendingUp,
-  ShoppingCart,
-  ArrowUp,
-  ArrowDown,
+  ShoppingCart
 } from "lucide-react";
 import StatCard from "./StatCard";
 import QuickActions from "./QuickActions";
