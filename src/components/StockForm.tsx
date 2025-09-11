@@ -21,7 +21,7 @@ export default function StockForm({
 }: StockFormProps) {
   const [nomMatiere, setNomMatiere] = useState("");
   const [quantite, setQuantite] = useState(0);
-  const [unite, setUnite] = useState("kg");
+  const [unite, setUnite] = useState("KG");
   const [seuilAlerte, setSeuilAlerte] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -30,17 +30,7 @@ export default function StockForm({
   const token = localStorage.getItem("token");
 
   // Options prédéfinies pour les unités
-  const uniteOptions = [
-    "kg",
-    "g",
-    "L",
-    "mL",
-    "pièce",
-    "paquet",
-    "carton",
-    "m",
-    "cm",
-  ];
+  const uniteOptions = ["KG", "LITRE", "UNITE"];
 
   useEffect(() => {
     if (stock) {
@@ -51,7 +41,7 @@ export default function StockForm({
     } else {
       setNomMatiere("");
       setQuantite(0);
-      setUnite("kg");
+      setUnite("KG");
       setSeuilAlerte(0);
     }
     setError("");
