@@ -16,6 +16,8 @@ interface LoginResponse {
   token: string;
 }
 
+const app_name = import.meta.env.VITE_APP_NAME || "I-TSAKY";
+
 export default function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -79,7 +81,7 @@ export default function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <div className="bg-white rounded-2xl shadow-xl overflow-hidden w-full max-w-md">
         <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-6 text-center">
-          <h1 className="text-2xl font-bold text-white">I-TSAKY</h1>
+          <h1 className="text-2xl font-bold text-white">{app_name}</h1>
           <p className="text-amber-100 text-sm mt-1">
             Plateforme de gestion de snacks
           </p>
@@ -222,7 +224,7 @@ export default function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
 
         <div className="bg-slate-50 px-8 py-4 border-t border-slate-200">
           <p className="text-xs text-center text-slate-500">
-            © {new Date().getFullYear()} I-TSAKY. Tous droits réservés.
+            © {new Date().getFullYear()} {app_name}. Tous droits réservés.
           </p>
         </div>
       </div>

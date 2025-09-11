@@ -130,7 +130,7 @@ export default function ProductsPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Produits</h1>
           <p className="text-gray-600">
-            Gérez votre catalogue de produits ${app_name}
+            Gérez votre catalogue de produits {app_name}
           </p>
         </div>
         <button
