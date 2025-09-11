@@ -190,6 +190,23 @@ export default function OrderForm({
     }
   };
 
+  const getAvailableStatus = (
+    current: Commande["statut"]
+  ): Commande["statut"][] => {
+    switch (current) {
+      case "EN_ATTENTE":
+        return ["EN_ATTENTE", "PAYEE", "ANNULEE"];
+      case "PAYEE":
+        return ["PAYEE", "LIVREE"];
+      case "LIVREE":
+        return ["LIVREE"];
+      case "ANNULEE":
+        return ["ANNULEE"];
+      default:
+        return ["EN_ATTENTE"];
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -329,10 +346,11 @@ export default function OrderForm({
                 }
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
               >
-                <option value="EN_ATTENTE">En attente</option>
-                <option value="PAYEE">Payée</option>
-                <option value="LIVREE">Livrée</option>
-                <option value="ANNULEE">Annulée</option>
+                {getAvailableStatus(statut).map((s) => (
+                  <option key={s} value={s}>
+                    {getStatusConfig(s).label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
