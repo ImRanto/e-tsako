@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 interface Product {
   id: number;
   nom: string;
-  categorie: "CHIPS" | "SNACK";
+  categorie: "CHIPS" | "SNACK" | "AUTRE";
   prixUnitaire: number;
   stockDisponible: number;
 }
@@ -22,7 +22,7 @@ export default function ProductForm({
   onCancel,
 }: ProductFormProps) {
   const [nom, setNom] = useState("");
-  const [categorie, setCategorie] = useState<"CHIPS" | "SNACK">("CHIPS");
+  const [categorie, setCategorie] = useState<"CHIPS" | "SNACK" | "AUTRE">("CHIPS");
   const [prixUnitaire, setPrixUnitaire] = useState<number>(0);
   const [stockDisponible, setStockDisponible] = useState<number>(0);
   const [loading, setLoading] = useState(false);
@@ -147,7 +147,7 @@ export default function ProductForm({
               onChange={(e) => setNom(e.target.value)}
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors"
-              placeholder="Ex : Chips Voanjo"
+              placeholder="Ex : Chips"
             />
           </div>
 
@@ -159,13 +159,14 @@ export default function ProductForm({
             <select
               value={categorie}
               onChange={(e) =>
-                setCategorie(e.target.value as "CHIPS" | "SNACK")
+                setCategorie(e.target.value as "CHIPS" | "SNACK" | "AUTRE")
               }
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors"
               required
             >
               <option value="CHIPS">CHIPS</option>
               <option value="SNACK">SNACK</option>
+              <option value="AUTRE">AUTRE</option>
             </select>
           </div>
 
