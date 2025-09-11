@@ -88,7 +88,7 @@ function App() {
                 {app_name}
               </h1>
               <p className="text-xl md:text-2xl mb-8 font-light opacity-95">
-                Application en ligne pour gérer tous sur {app_name}
+                Application de gestion en ligne de snacks 
               </p>
 
               <div className="hidden md:block mt-12">
