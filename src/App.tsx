@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
 import ProductsPage from "./pages/ProductsPage";
@@ -18,6 +18,8 @@ function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
+
+  const baseUrl = import.meta.env.VITE_API_URL;
   const app_name = import.meta.env.VITE_APP_NAME;
 
   const renderPage = () => {
@@ -51,6 +53,23 @@ function App() {
     setIsAuthenticated(false);
     setCurrentPage("dashboard");
   };
+
+  useEffect(() => {
+    const pingBackend = async () => {
+      try {
+        await fetch(`${import.meta.env.VITE_API_URL}/pingR`);
+        console.log("Backend awake");
+      } catch (err) {
+        console.error("Backend ping failed", err);
+      }
+    };
+
+    pingBackend();
+
+    const interval = setInterval(pingBackend, 13 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
@@ -88,7 +107,7 @@ function App() {
                 {app_name}
               </h1>
               <p className="text-xl md:text-2xl mb-8 font-light opacity-95">
-                Application de gestion en ligne de snacks 
+                Application de gestion en ligne de snacks
               </p>
 
               <div className="hidden md:block mt-12">
