@@ -207,6 +207,38 @@ export default function OrderForm({
     }
   };
 
+  const updateStatut = async (
+    commandeId: number,
+    nouveauStatut: Commande["statut"]
+  ) => {
+    try {
+      const res = await fetch(
+        `${baseUrl}/api/commandes/${commandeId}/statut?nouveauStatut=${nouveauStatut}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Erreur lors de la mise à jour du statut");
+      }
+
+      const updated = await res.json();
+      setSuccess(`Statut mis à jour : ${updated.statut}`);
+      setStatut(updated.statut);
+      onSaved?.();
+    } catch (err: any) {
+      console.error("Erreur update statut:", err);
+      setError(
+        err.message || "Erreur inconnue lors de la mise à jour du statut"
+      );
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -342,7 +374,7 @@ export default function OrderForm({
               <select
                 value={statut}
                 onChange={(e) =>
-                  setStatut(e.target.value as Commande["statut"])
+                  updateStatut(order!.id, e.target.value as Commande["statut"])
                 }
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
               >
