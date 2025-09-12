@@ -5,6 +5,7 @@ const baseUrl = import.meta.env.VITE_API_URL;
 interface LoginPageProps {
   onLogin: () => void;
   onShowRegister: () => void;
+  onShowResetPassword: () => void; // <-- ajouté
 }
 
 interface LoginResponse {
@@ -18,17 +19,21 @@ interface LoginResponse {
 
 const app_name = import.meta.env.VITE_APP_NAME || "I-TSAKY";
 
-export default function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
+export default function LoginPage({
+  onLogin,
+  onShowRegister,
+  onShowResetPassword,
+}: LoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-    const isPasswordStrong = (password: string) => {
-      const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-      return regex.test(password);
-    };
+  const isPasswordStrong = (password: string) => {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    return regex.test(password);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,15 +189,24 @@ export default function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
                   )}
                 </button>
               </div>
-                          <p
-              className={`text-xs mt-1 ${
-                isPasswordStrong(password) ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              {isPasswordStrong(password)
-                ? "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre."
-                : "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre."}
-            </p>
+              <p
+                className={`text-xs mt-1 ${
+                  isPasswordStrong(password) ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                Le mot de passe doit contenir au moins 8 caractères, une
+                majuscule, une minuscule et un chiffre.
+              </p>
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={onShowResetPassword}
+                  className="text-sm text-amber-600 hover:text-amber-500 font-medium"
+                >
+                  Mot de passe oublié ?
+                </button>
+              </div>
             </div>
           </div>
 
@@ -208,7 +222,7 @@ export default function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
             {isLoading ? "Connexion..." : "Se connecter"}
           </button>
 
-          <div className="text-center text-sm text-slate-600">
+          <div className="text-center text-sm text-slate-600 flex justify-between mt-2">
             <p>
               Pas encore de compte?{" "}
               <button
