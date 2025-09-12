@@ -1,51 +1,41 @@
-import { useState, useEffect } from "react";
-import { Sparkles, LucideCuboid } from "lucide-react";
+import React from 'react';
 
-export default function Loader() {
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(timer);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 300);
-
-    return () => clearInterval(timer);
-  }, []);
-
+const Loader = () => {
   return (
-    <div className="fixed inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-50">
-      <div className="relative">
-        {/* Loader principal avec animation améliorée */}
-        <div className="relative w-20 h-20 mb-6">
-          <div className="absolute inset-0 rounded-full border-4 border-amber-100"></div>
-          <div className="absolute inset-0 rounded-full border-4 border-amber-600 border-t-transparent animate-spin"></div>
-
-          {/* Icône au centre avec légère animation */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <LucideCuboid className="w-8 h-8 text-amber-600 animate-pulse" />
-          </div>
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="text-center">
+        {/* Loader type 1: Spinner circulaire */}
+        <div className="relative w-16 h-16 mx-auto mb-6">
+          <div className="absolute inset-0 border-4 border-amber-200 rounded-full"></div>
+          <div className="absolute inset-0 border-4 border-transparent rounded-full border-t-amber-600 animate-spin"></div>
         </div>
-
-        {/* Barre de progression optionnelle */}
-        <div className="w-48 bg-amber-100 rounded-full h-2 mb-4 overflow-hidden">
-          <div
-            className="bg-amber-600 h-2 rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${progress}%` }}
-          ></div>
+        
+        {/* Loader type 2: Points animés */}
+        <div className="flex justify-center space-x-2 mb-8">
+          <div className="w-3 h-3 bg-amber-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+          <div className="w-3 h-3 bg-amber-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+          <div className="w-3 h-3 bg-amber-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
         </div>
-
-        {/* Texte avec animation subtile */}
-        <p className="text-gray-700 font-medium flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-amber-600 animate-pulse" />
-          Chargement en cours...
-        </p>
+        
+        {/* Loader type 3: Barre de progression */}
+        <div className="w-48 h-2 bg-amber-200 rounded-full mx-auto overflow-hidden">
+          <div className="h-full bg-amber-600 rounded-full animate-progress"></div>
+        </div>
+        
+        <p className="mt-4 text-gray-600 font-medium">Chargement...</p>
       </div>
+      
+      <style jsx>{`
+        @keyframes progress {
+          0% { width: 0%; }
+          100% { width: 100%; }
+        }
+        .animate-progress {
+          animation: progress 1.5s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
-}
+};
+
+export default Loader;
