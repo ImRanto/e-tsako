@@ -121,7 +121,7 @@ export default function OrdersPage() {
 
     try {
       let endpoint;
-      if (role === "ADMIN") {
+      if (role === "A") {
         endpoint = `${baseUrl}/api/commandes/paged?page=${page}&size=${ITEMS_PER_PAGE}`;
       } else {
         endpoint = `${baseUrl}/api/commandes/mes-commandes2?page=${page}&size=${ITEMS_PER_PAGE}`;
