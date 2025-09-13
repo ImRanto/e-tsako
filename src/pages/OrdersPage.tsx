@@ -10,14 +10,15 @@ import {
   ShoppingCart,
   DollarSign,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import OrderForm from "../components/OrderForm";
 import Modal from "../components/Modal";
-import { jwtDecode } from "jwt-decode";
 
 interface DecodedToken {
   sub: string;
-  role: string[]; // ou authorities selon ton backend
+  role: string[];
 }
 
 interface Client {
@@ -44,15 +45,55 @@ interface DetailCommande {
   prixTotal: number;
 }
 
+interface Utilisateur {
+  id: number;
+  nom: string;
+  prenom: string;
+  role: string;
+  email: string;
+}
+
 interface Commande {
   id: number;
   client: Client;
   dateCommande: string;
   statut: "EN_ATTENTE" | "PAYEE" | "LIVREE" | "ANNULEE";
   details: DetailCommande[];
+  createdBy: Utilisateur;
+  updatedBy: Utilisateur | null;
+}
+
+interface ApiResponse {
+  content: Commande[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+    sort: {
+      empty: boolean;
+      unsorted: boolean;
+      sorted: boolean;
+    };
+    offset: number;
+    paged: boolean;
+    unpaged: boolean;
+  };
+  last: boolean;
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+  sort: {
+    empty: boolean;
+    unsorted: boolean;
+    sorted: boolean;
+  };
+  numberOfElements: number;
+  first: boolean;
+  empty: boolean;
 }
 
 const baseUrl = import.meta.env.VITE_API_URL;
+const ITEMS_PER_PAGE = 10;
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Commande[]>([]);
@@ -62,37 +103,64 @@ export default function OrdersPage() {
   const [editingOrder, setEditingOrder] = useState<Commande | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
 
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
 
   useEffect(() => {
     if (!token) return;
+    fetchOrders(currentPage);
+  }, [token, role, currentPage]);
+
+  const fetchOrders = async (page: number) => {
+    if (!token) return;
     setLoading(true);
 
-    // if (token) {
-    // const decoded: DecodedToken = jwtDecode(token);
-    // console.log("Décodage JWT :", decoded);
-    // localStorage.setItem("role", decoded.role[0]);
-    // }
-    const endpoint =
-      role === "A"
-        ? `${baseUrl}/api/commandes` // Admin -> toutes les commandes
-        : `${baseUrl}/api/commandes/mes-commandes`; // Autres -> seulement les leurs
+    try {
+      let endpoint;
+      if (role === "ADMIN") {
+        endpoint = `${baseUrl}/api/commandes/paged?page=${page}&size=${ITEMS_PER_PAGE}`;
+      } else {
+        endpoint = `${baseUrl}/api/commandes/mes-commandes2?page=${page}&size=${ITEMS_PER_PAGE}`;
+      }
 
-    fetch(endpoint, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Erreur de chargement");
-        return res.json();
-      })
-      .then((data: Commande[]) => {
-        setOrders(data);
-      })
-      .catch((err) => console.error("Erreur fetch commandes:", err))
-      .finally(() => setLoading(false));
-  }, [token, role]);
+      const response = await fetch(endpoint, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Erreur de chargement");
+
+      const data: ApiResponse = await response.json();
+
+      setOrders(data.content);
+      setTotalPages(data.totalPages);
+      setTotalElements(data.totalElements);
+      setCurrentPage(data.number);
+    } catch (err) {
+      console.error("Erreur fetch commandes:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filtrage côté client (optionnel, selon les besoins)
+  const filteredOrders = orders.filter((order) => {
+    const matchesSearch =
+      order.client.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.id.toString().includes(searchTerm) ||
+      order.client.telephone.includes(searchTerm);
+    const matchesStatus = statusFilter === "" || order.statut === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const goToPage = (page: number) => {
+    if (page >= 0 && page < totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   const openCreateModal = () => {
     setEditingOrder(null);
@@ -118,7 +186,8 @@ export default function OrdersPage() {
         body: JSON.stringify(newOrder),
       });
       const saved = await res.json();
-      setOrders([...orders, saved]);
+      // Recharger les données après création
+      fetchOrders(currentPage);
     } catch (err) {
       console.error("Erreur création commande:", err);
     } finally {
@@ -140,7 +209,8 @@ export default function OrdersPage() {
         body: JSON.stringify(updatedOrder),
       });
       const saved = await res.json();
-      setOrders(orders.map((o) => (o.id === id ? saved : o)));
+      // Recharger les données après modification
+      fetchOrders(currentPage);
     } catch (err) {
       console.error("Erreur modification commande:", err);
     } finally {
@@ -157,7 +227,8 @@ export default function OrdersPage() {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         });
-        setOrders(orders.filter((o) => o.id !== id));
+        // Recharger les données après suppression
+        fetchOrders(currentPage);
       } catch (err) {
         console.error("Erreur suppression commande:", err);
       }
@@ -192,15 +263,6 @@ export default function OrdersPage() {
     }
   };
 
-  const filteredOrders = orders.filter((order) => {
-    const matchesSearch =
-      order.client.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.id.toString().includes(searchTerm) ||
-      order.client.telephone.includes(searchTerm);
-    const matchesStatus = statusFilter === "" || order.statut === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("fr-FR", {
       day: "2-digit",
@@ -209,6 +271,25 @@ export default function OrdersPage() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  // Générer les numéros de page à afficher
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+
+    let startPage = Math.max(0, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(0, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return pages;
   };
 
   return (
@@ -315,31 +396,23 @@ export default function OrdersPage() {
         )}
       </div>
 
+      {/* Info de pagination */}
+      {!loading && orders.length > 0 && (
+        <div className="flex justify-between items-center mb-4">
+          <p className="text-sm text-gray-600">
+            Affichage de {currentPage * ITEMS_PER_PAGE + 1} à{" "}
+            {Math.min((currentPage + 1) * ITEMS_PER_PAGE, totalElements)} sur{" "}
+            {totalElements} commande(s)
+          </p>
+        </div>
+      )}
+
       {/* Liste des commandes */}
       {loading ? (
-        <div className="space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-pulse"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="space-y-2">
-                  <div className="h-6 bg-gray-200 rounded w-32"></div>
-                  <div className="h-4 bg-gray-200 rounded w-24"></div>
-                </div>
-                <div className="h-6 bg-gray-200 rounded w-20"></div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="h-4 bg-gray-200 rounded"></div>
-                <div className="h-4 bg-gray-200 rounded"></div>
-                <div className="h-4 bg-gray-200 rounded"></div>
-                <div className="h-4 bg-gray-200 rounded"></div>
-              </div>
-            </div>
-          ))}
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
         </div>
-      ) : filteredOrders.length === 0 ? (
+      ) : orders.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
           <div className="text-gray-400 mb-4">
             <Package size={48} className="mx-auto" />
@@ -361,152 +434,213 @@ export default function OrdersPage() {
           </button>
         </div>
       ) : (
-        <div className="grid gap-4 lg:gap-6">
-          {filteredOrders.map((order) => {
-            const total =
-              order.details?.reduce((sum, d) => sum + (d.prixTotal || 0), 0) ??
-              0;
-            const totalUnits =
-              order.details?.reduce(
-                (sum, d) => sum + (Number(d.quantite) || 0),
-                0
-              ) ?? 0;
+        <>
+          <div className="grid gap-4 lg:gap-6">
+            {orders.map((order) => {
+              const total =
+                order.details?.reduce(
+                  (sum, d) => sum + (d.prixTotal || 0),
+                  0
+                ) ?? 0;
+              const totalUnits =
+                order.details?.reduce(
+                  (sum, d) => sum + (Number(d.quantite) || 0),
+                  0
+                ) ?? 0;
 
-            return (
-              <div
-                key={order.id}
-                className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 lg:p-6 hover:shadow-md transition-shadow"
-              >
-                {/* Header */}
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 lg:mb-6">
-                  <div className="flex items-center mb-3 lg:mb-0">
-                    <div className="p-2 bg-amber-100 rounded-xl mr-3">
-                      <Package size={20} className="text-amber-600" />
+              return (
+                <div
+                  key={order.id}
+                  className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 lg:p-6 hover:shadow-md transition-shadow"
+                >
+                  {/* Header */}
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 lg:mb-6">
+                    <div className="flex items-center mb-3 lg:mb-0">
+                      <div className="p-2 bg-amber-100 rounded-xl mr-3">
+                        <Package size={20} className="text-amber-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900 text-lg">
+                          Commande #{order.id}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {order.client.nom}
+                        </p>
+                        {order.createdBy && (
+                          <p className="text-xs text-gray-400 mt-1">
+                            Créée par: {order.createdBy.prenom}{" "}
+                            {order.createdBy.nom}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 text-lg">
-                        Commande #{order.id}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {order.client.nom}
-                      </p>
+
+                    <div className="flex items-center justify-between lg:justify-end lg:gap-4">
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                          order.statut
+                        )}`}
+                      >
+                        {getStatusIcon(order.statut)}
+                        {order.statut.replace("_", " ")}
+                      </span>
+
+                      {/* Mobile Actions */}
+                      <div className="lg:hidden flex gap-2">
+                        <button
+                          onClick={() => openEditModal(order)}
+                          className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                          title="Modifier"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(order.id)}
+                          className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                          title="Supprimer"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between lg:justify-end lg:gap-4">
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                        order.statut
-                      )}`}
-                    >
-                      {getStatusIcon(order.statut)}
-                      {order.statut.replace("_", " ")}
-                    </span>
+                  {/* Order Details */}
+                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6 mb-4 lg:mb-6">
+                    <div className="flex items-center">
+                      <Calendar size={16} className="text-gray-400 mr-2" />
+                      <div>
+                        <p className="text-xs text-gray-500">Date</p>
+                        <p className="font-medium text-sm">
+                          {formatDate(order.dateCommande)}
+                        </p>
+                      </div>
+                    </div>
 
-                    {/* Mobile Actions */}
-                    <div className="lg:hidden flex gap-2">
+                    <div className="flex items-center">
+                      <Package size={16} className="text-gray-400 mr-2" />
+                      <div>
+                        <p className="text-xs text-gray-500">Articles</p>
+                        <p className="font-medium text-sm">
+                          {totalUnits} produit(s)
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center">
+                      <DollarSign size={16} className="text-gray-400 mr-2" />
+                      <div>
+                        <p className="text-xs text-gray-500">Total</p>
+                        <p className="font-bold text-gray-900 text-lg">
+                          {total.toLocaleString()} Ar
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Desktop Actions */}
+                    <div className="hidden lg:flex items-center justify-end gap-2">
                       <button
                         onClick={() => openEditModal(order)}
-                        className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
-                        title="Modifier"
+                        className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
+                        disabled={loading}
                       >
-                        <Edit size={16} />
+                        <Edit size={14} className="mr-1" />
+                        Modifier
                       </button>
                       <button
                         onClick={() => handleDelete(order.id)}
-                        className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                        title="Supprimer"
+                        className="flex items-center px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm"
+                        disabled={loading}
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} className="mr-1" />
+                        Supprimer
                       </button>
                     </div>
                   </div>
-                </div>
 
-                {/* Order Details */}
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6 mb-4 lg:mb-6">
-                  <div className="flex items-center">
-                    <Calendar size={16} className="text-gray-400 mr-2" />
-                    <div>
-                      <p className="text-xs text-gray-500">Date</p>
-                      <p className="font-medium text-sm">
-                        {formatDate(order.dateCommande)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center">
-                    <Package size={16} className="text-gray-400 mr-2" />
-                    <div>
-                      <p className="text-xs text-gray-500">Articles</p>
-                      <p className="font-medium text-sm">
-                        {totalUnits} produit(s)
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center">
-                    <DollarSign size={16} className="text-gray-400 mr-2" />
-                    <div>
-                      <p className="text-xs text-gray-500">Total</p>
-                      <p className="font-bold text-gray-900 text-lg">
-                        {total.toLocaleString()} Ar
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Desktop Actions */}
-                  <div className="hidden lg:flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => openEditModal(order)}
-                      className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
-                      disabled={loading}
-                    >
-                      <Edit size={14} className="mr-1" />
-                      Modifier
-                    </button>
-                    <button
-                      onClick={() => handleDelete(order.id)}
-                      className="flex items-center px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm"
-                      disabled={loading}
-                    >
-                      <Trash2 size={14} className="mr-1" />
-                      Supprimer
-                    </button>
-                  </div>
-                </div>
-
-                {/* Items de la commande */}
-                <div className="pt-4 border-t border-gray-100">
-                  <p className="text-sm font-medium text-gray-700 mb-3">
-                    Articles commandés:
-                  </p>
-                  <div className="space-y-2">
-                    {order.details.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
-                      >
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900 text-sm">
-                            {item.produit.nom}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {item.quantite} ×{" "}
-                            {item.produit.prixUnitaire.toLocaleString()} Ar
-                          </p>
+                  {/* Items de la commande */}
+                  <div className="pt-4 border-t border-gray-100">
+                    <p className="text-sm font-medium text-gray-700 mb-3">
+                      Articles commandés:
+                    </p>
+                    <div className="space-y-2">
+                      {order.details.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                        >
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900 text-sm">
+                              {item.produit.nom}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {item.quantite} ×{" "}
+                              {item.produit.prixUnitaire.toLocaleString()} Ar
+                            </p>
+                          </div>
+                          <span className="font-semibold text-gray-900">
+                            {item.prixTotal.toLocaleString()} Ar
+                          </span>
                         </div>
-                        <span className="font-semibold text-gray-900">
-                          {item.prixTotal.toLocaleString()} Ar
-                        </span>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
+              );
+            })}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
+              <p className="text-sm text-gray-600">
+                Page {currentPage + 1} sur {totalPages}
+              </p>
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 0}
+                  className="flex items-center px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft size={16} className="mr-1" />
+                  Précédent
+                </button>
+
+                <div className="flex items-center gap-1 mx-2">
+                  {getPageNumbers().map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => goToPage(page)}
+                      className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-colors ${
+                        currentPage === page
+                          ? "bg-amber-500 text-white border-amber-500"
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      {page + 1}
+                    </button>
+                  ))}
+
+                  {totalPages > getPageNumbers().length &&
+                    getPageNumbers()[getPageNumbers().length - 1] <
+                      totalPages - 1 && (
+                      <span className="px-2 text-gray-500">...</span>
+                    )}
+                </div>
+
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages - 1}
+                  className="flex items-center px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Suivant
+                  <ChevronRight size={16} className="ml-1" />
+                </button>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Modal avec OrderForm */}
