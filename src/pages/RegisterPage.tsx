@@ -82,9 +82,8 @@ export default function RegisterPage({
       }
 
       const data: RegisterResponse = await res.json();
-      console.log("Utilisateur inscrit :", data);
 
-      // ✅ Sauvegarde du token et utilisateur
+      // Sauvegarde du token et utilisateur
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data));
 
