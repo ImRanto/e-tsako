@@ -32,6 +32,7 @@ export const menuByRole: Record<string, any[]> = {
     { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
     { id: "orders", label: "Commandes", icon: ShoppingCart },
     { id: "customers", label: "Clients", icon: Users },
+    { id: "expenses", label: "Dépenses", icon: TrendingDown },
   ],
   MARKETING: [
     { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
