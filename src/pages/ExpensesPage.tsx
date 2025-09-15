@@ -19,11 +19,21 @@ import {
   CheckSquare,
   Square,
   FileDown,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import Modal from "../components/Modal";
 import ExpenseForm from "../components/ExpensesForm";
 import { exportToCSV, exportToPDF } from "../utils/exportUtils";
 import ExpenseCharts from "../components/chart/ExpenseChart";
+import { jwtDecode } from "jwt-decode";
+
+interface DecodedToken {
+  sub: string;
+  role: string;
+  exp: number;
+  iat: number;
+}
 
 interface Expense {
   id: number;
@@ -36,6 +46,35 @@ interface Expense {
   montant: number;
   dateDepense: string;
   description: string;
+}
+
+interface ApiResponse {
+  content: Expense[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+    sort: {
+      empty: boolean;
+      sorted: boolean;
+      unsorted: boolean;
+    };
+    offset: number;
+    paged: boolean;
+    unpaged: boolean;
+  };
+  last: boolean;
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  sort: {
+    empty: boolean;
+    sorted: boolean;
+    unsorted: boolean;
+  };
+  first: boolean;
+  numberOfElements: number;
+  empty: boolean;
 }
 
 const baseUrl = import.meta.env.VITE_API_URL;
@@ -56,14 +95,21 @@ export default function ExpensesPage() {
   const [showStats, setShowStats] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedExpenses, setSelectedExpenses] = useState<number[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [showCharts, setShowCharts] = useState(false);
+  const [paginationInfo, setPaginationInfo] = useState({
+    totalElements: 0,
+    totalPages: 0,
+    first: true,
+    last: true,
+    number: 0,
+  });
 
   const itemsPerPageOptions = [5, 10, 25, 50];
 
-  // Fetch des dépenses
-  const fetchExpenses = () => {
+  // Fetch des dépenses avec pagination
+  const fetchExpenses = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
       setError("Token d'authentification manquant");
@@ -73,34 +119,64 @@ export default function ExpensesPage() {
 
     setIsLoading(true);
     setError(null);
-    fetch(`${baseUrl}/api/depenses`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => {
-        if (!res.ok) {
-          if (res.status === 401) {
-            throw new Error("Session expirée. Veuillez vous reconnecter.");
-          }
-          throw new Error("Erreur lors du chargement des dépenses");
-        }
-        return res.json();
-      })
-      .then((data: Expense[]) => {
-        setExpenses(data);
-        setSelectedExpenses([]);
-      })
-      .catch((err) => {
-        console.error("Erreur fetch dépenses:", err);
-        setError(err.message);
-      })
-      .finally(() => setIsLoading(false));
+
+    try {
+      // Décoder le token pour récupérer le rôle
+      const decoded: DecodedToken = jwtDecode(token);
+
+      // Construire les paramètres de requête
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        size: itemsPerPage.toString(),
+      });
+
+      // Ajouter les filtres s'ils sont définis
+      if (searchTerm) params.append("search", searchTerm);
+      if (typeFilter) params.append("type", typeFilter);
+      if (dateRange.start) params.append("startDate", dateRange.start);
+      if (dateRange.end) params.append("endDate", dateRange.end);
+
+      // Choix de l'endpoint selon le rôle
+      const endpoint =
+        decoded.role === "ADMIN"
+          ? `${baseUrl}/api/depenses/paged?${params}`
+          : `${baseUrl}/api/depenses/mes-depenses?${params}`;
+
+      const response = await fetch(endpoint, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401)
+          throw new Error("Session expirée. Reconnectez-vous.");
+        throw new Error("Erreur lors du chargement des dépenses");
+      }
+
+      const data: ApiResponse = await response.json();
+
+      setExpenses(data.content);
+      setPaginationInfo({
+        totalElements: data.totalElements,
+        totalPages: data.totalPages,
+        first: data.first,
+        last: data.last,
+        number: data.number,
+      });
+
+      setSelectedExpenses([]);
+    } catch (err: any) {
+      console.error("Erreur fetch dépenses:", err);
+      setError(err.message || "Erreur inconnue");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchExpenses();
-  }, []);
+  }, [currentPage, itemsPerPage, searchTerm, typeFilter, dateRange]);
 
   // CRUD
   const handleSave = async (expenseData: Omit<Expense, "id">) => {
@@ -178,7 +254,6 @@ export default function ExpensesPage() {
       )
     ) {
       try {
-        // Utiliser Promise.all pour supprimer toutes les dépenses sélectionnées
         await Promise.all(
           selectedExpenses.map((id) =>
             fetch(`${baseUrl}/api/depenses/${id}`, {
@@ -255,7 +330,9 @@ export default function ExpensesPage() {
     const matchesStartDate =
       !dateRange.start || expenseDate >= new Date(dateRange.start);
     const matchesEndDate =
-      !dateRange.end || expenseDate <= new Date(dateRange.end + "T23:59:59");
+      !dateRange.end ||
+      expenseDate.getTime() <=
+        new Date(dateRange.end).setHours(23, 59, 59, 999);
 
     return matchesSearch && matchesType && matchesStartDate && matchesEndDate;
   });
@@ -295,13 +372,11 @@ export default function ExpensesPage() {
   }
 
   // Pagination
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = sortedExpenses.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(sortedExpenses.length / itemsPerPage);
+  const totalPages = paginationInfo.totalPages;
+  const currentPageIndex = paginationInfo.number;
 
   const paginate = (pageNumber: number) => {
-    if (pageNumber > 0 && pageNumber <= totalPages) {
+    if (pageNumber >= 0 && pageNumber < totalPages) {
       setCurrentPage(pageNumber);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -309,10 +384,10 @@ export default function ExpensesPage() {
 
   // Gestion de la sélection
   const toggleSelectAll = () => {
-    if (selectedExpenses.length === currentItems.length) {
+    if (selectedExpenses.length === expenses.length) {
       setSelectedExpenses([]);
     } else {
-      setSelectedExpenses(currentItems.map((expense) => expense.id));
+      setSelectedExpenses(expenses.map((expense) => expense.id));
     }
   };
 
@@ -375,7 +450,7 @@ export default function ExpensesPage() {
     setSearchTerm("");
     setTypeFilter("");
     setDateRange({ start: "", end: "" });
-    setCurrentPage(1);
+    setCurrentPage(0);
   };
 
   const hasActiveFilters =
@@ -420,15 +495,70 @@ export default function ExpensesPage() {
   const PaginationControls = () => {
     if (totalPages <= 1) return null;
 
+    const generatePageNumbers = () => {
+      const pages = [];
+      const maxVisiblePages = 5;
+
+      if (totalPages <= maxVisiblePages) {
+        for (let i = 0; i < totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // Always include first page
+        pages.push(0);
+
+        // Calculate start and end of visible pages
+        let start = Math.max(
+          1,
+          currentPageIndex - Math.floor(maxVisiblePages / 2)
+        );
+        let end = Math.min(totalPages - 1, start + maxVisiblePages - 1);
+
+        // Adjust if we're near the end
+        if (end === totalPages - 1) {
+          start = totalPages - maxVisiblePages;
+        }
+
+        // Add ellipsis if needed
+        if (start > 1) {
+          pages.push(-1); // -1 represents ellipsis
+        }
+
+        // Add middle pages
+        for (let i = start; i < end; i++) {
+          if (i > 0 && i < totalPages - 1) {
+            pages.push(i);
+          }
+        }
+
+        // Add ellipsis if needed
+        if (end < totalPages - 1) {
+          pages.push(-2); // -2 represents ellipsis
+        }
+
+        // Always include last page
+        pages.push(totalPages - 1);
+      }
+
+      return pages;
+    };
+
     return (
       <div className="flex flex-col sm:flex-row items-center justify-between mt-6 px-4 py-3 bg-white border-t border-gray-200 rounded-b-lg">
         <div className="text-sm text-gray-700 mb-4 sm:mb-0">
           Affichage de{" "}
-          <span className="font-medium">{indexOfFirstItem + 1}</span> à{" "}
           <span className="font-medium">
-            {Math.min(indexOfLastItem, sortedExpenses.length)}
+            {currentPageIndex * itemsPerPage + 1}
           </span>{" "}
-          sur <span className="font-medium">{sortedExpenses.length}</span>{" "}
+          à{" "}
+          <span className="font-medium">
+            {Math.min(
+              (currentPageIndex + 1) * itemsPerPage,
+              paginationInfo.totalElements
+            )}
+          </span>{" "}
+          sur{" "}
+          <span className="font-medium">{paginationInfo.totalElements}</span>{" "}
           résultats
         </div>
 
@@ -437,7 +567,7 @@ export default function ExpensesPage() {
             value={itemsPerPage}
             onChange={(e) => {
               setItemsPerPage(Number(e.target.value));
-              setCurrentPage(1);
+              setCurrentPage(0);
             }}
             className="text-sm border border-gray-300 rounded-md px-2 py-1"
           >
@@ -450,46 +580,38 @@ export default function ExpensesPage() {
 
           <nav className="flex space-x-1">
             <button
-              onClick={() => paginate(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="px-2 py-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => paginate(currentPageIndex - 1)}
+              disabled={paginationInfo.first}
+              className="px-2 py-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
+              <ChevronLeft size={16} className="mr-1" />
               Précédent
             </button>
 
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              let pageNum;
-              if (totalPages <= 5) {
-                pageNum = i + 1;
-              } else if (currentPage <= 3) {
-                pageNum = i + 1;
-              } else if (currentPage >= totalPages - 2) {
-                pageNum = totalPages - 4 + i;
-              } else {
-                pageNum = currentPage - 2 + i;
-              }
-
-              return (
-                <button
-                  key={pageNum}
-                  onClick={() => paginate(pageNum)}
-                  className={`px-3 py-1 rounded-md text-sm ${
-                    currentPage === pageNum
-                      ? "bg-amber-500 text-white"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
+            {generatePageNumbers().map((pageNum, index) => (
+              <button
+                key={index}
+                onClick={() => pageNum >= 0 && paginate(pageNum)}
+                disabled={pageNum < 0}
+                className={`px-3 py-1 rounded-md text-sm min-w-[2.5rem] ${
+                  currentPageIndex === pageNum
+                    ? "bg-amber-500 text-white"
+                    : pageNum < 0
+                    ? "text-gray-400 cursor-default"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {pageNum < 0 ? "..." : pageNum + 1}
+              </button>
+            ))}
 
             <button
-              onClick={() => paginate(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="px-2 py-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => paginate(currentPageIndex + 1)}
+              disabled={paginationInfo.last}
+              className="px-2 py-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
               Suivant
+              <ChevronRight size={16} className="ml-1" />
             </button>
           </nav>
         </div>
@@ -613,7 +735,7 @@ export default function ExpensesPage() {
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
-                    setCurrentPage(1);
+                    setCurrentPage(0);
                   }}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors"
                 />
@@ -640,7 +762,7 @@ export default function ExpensesPage() {
                   value={typeFilter}
                   onChange={(e) => {
                     setTypeFilter(e.target.value);
-                    setCurrentPage(1);
+                    setCurrentPage(0);
                   }}
                   className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors"
                 >
@@ -657,7 +779,7 @@ export default function ExpensesPage() {
                   value={dateRange.start}
                   onChange={(e) => {
                     setDateRange({ ...dateRange, start: e.target.value });
-                    setCurrentPage(1);
+                    setCurrentPage(0);
                   }}
                   className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors"
                   placeholder="Date de début"
@@ -668,7 +790,7 @@ export default function ExpensesPage() {
                   value={dateRange.end}
                   onChange={(e) => {
                     setDateRange({ ...dateRange, end: e.target.value });
-                    setCurrentPage(1);
+                    setCurrentPage(0);
                   }}
                   className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors"
                   placeholder="Date de fin"
@@ -732,6 +854,7 @@ export default function ExpensesPage() {
             <button
               onClick={handleBulkDelete}
               className="inline-flex items-center px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm"
+              disabled={isLoading}
             >
               <Trash2 size={16} className="mr-1.5" />
               Supprimer la sélection
@@ -746,7 +869,7 @@ export default function ExpensesPage() {
               <RefreshCw className="h-8 w-8 text-amber-500 animate-spin mx-auto mb-3" />
               <p className="text-gray-500">Chargement des dépenses...</p>
             </div>
-          ) : filteredExpenses.length === 0 ? (
+          ) : expenses.length === 0 ? (
             <div className="p-6 text-center">
               <div className="mx-auto w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mb-3">
                 <Search size={20} className="text-gray-400" />
@@ -790,7 +913,7 @@ export default function ExpensesPage() {
                           className="flex items-center focus:outline-none"
                           aria-label="Sélectionner toutes les dépenses"
                         >
-                          {selectedExpenses.length === currentItems.length ? (
+                          {selectedExpenses.length === expenses.length ? (
                             <CheckSquare size={16} className="text-amber-500" />
                           ) : (
                             <Square size={16} className="text-gray-400" />
@@ -827,7 +950,7 @@ export default function ExpensesPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {currentItems.map((expense) => (
+                    {expenses.map((expense) => (
                       <tr
                         key={expense.id}
                         className={`hover:bg-gray-50 transition-colors ${
@@ -906,7 +1029,7 @@ export default function ExpensesPage() {
 
               {/* Mobile Cards (shown on mobile) */}
               <div className="md:hidden divide-y divide-gray-200">
-                {currentItems.map((expense) => (
+                {expenses.map((expense) => (
                   <div
                     key={expense.id}
                     className={`p-4 hover:bg-gray-50 transition-colors ${
