@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  AlertTriangle,
   Package,
   ShoppingCart,
   TrendingUp,
@@ -230,8 +231,61 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Alertes + QuickActions */}
+        {/* Alertes stock + QuickActions */}
         <div className="space-y-6">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 bg-amber-50">
+              <h3 className="text-lg font-semibold text-amber-900 flex items-center">
+                <AlertTriangle className="mr-2 text-amber-500" size={20} />
+                Alertes stock
+              </h3>
+            </div>
+            <div className="p-6 space-y-3">
+              {lowStockProducts.length > 0 ? (
+                lowStockProducts.map((product) => (
+                  <div
+                    key={product.id}
+                    className="p-4 bg-amber-50 rounded-xl border border-amber-200 hover:shadow-md transition-shadow duration-200"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="font-medium text-amber-900 truncate">
+                          {product.nomMatiere}
+                        </p>
+                        <div className="flex items-center mt-2">
+                          <div className="w-full bg-amber-200 rounded-full h-2">
+                            <div
+                              className="bg-amber-500 h-2 rounded-full"
+                              style={{
+                                width: `${Math.min(
+                                  100,
+                                  (product.quantite / product.seuilAlerte) * 100
+                                )}%`,
+                              }}
+                            ></div>
+                          </div>
+                          <span className="text-xs text-amber-700 ml-2 whitespace-nowrap">
+                            {product.quantite}/{product.seuilAlerte}{" "}
+                            {product.unite}
+                          </span>
+                        </div>
+                      </div>
+                      <AlertTriangle
+                        className="text-amber-500 ml-2 flex-shrink-0"
+                        size={16}
+                      />
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Package className="mx-auto h-12 w-12 text-gray-300 mb-3" />
+                  <p>Aucune alerte de stock</p>
+                </div>
+              )}
+            </div>
+          </div>
+          
           <QuickActions />
         </div>
       </div>
