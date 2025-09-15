@@ -125,13 +125,13 @@ function App() {
     <>
       {isLoading && <Loader />}
       {isAuthenticated || currentPage === "admin" ? (
-        <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
+        <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
           <Sidebar
             currentPage={currentPage}
             onPageChange={setCurrentPage}
             onLogout={handleLogout}
           />
-          <main className="flex-1 md:ml-64">
+          <main className="flex-1 lg:ml-72 transition-all duration-300">
             {currentPage === "admin" ? (
               <AdminLoginPage
                 adminUser={import.meta.env.VITE_ADMIN_USER}

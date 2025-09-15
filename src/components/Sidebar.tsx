@@ -11,9 +11,6 @@ import {
   User,
   Building,
   Truck,
-  PieChart,
-  Bell,
-  HelpCircle,
 } from "lucide-react";
 
 interface SidebarProps {
