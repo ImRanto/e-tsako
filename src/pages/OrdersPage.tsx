@@ -15,12 +15,14 @@ import {
 } from "lucide-react";
 import OrderForm from "../components/OrderForm";
 import Modal from "../components/Modal";
+import { jwtDecode } from "jwt-decode";
 
 interface DecodedToken {
   sub: string;
-  role: string[];
+  role: string;
+  exp: number;
+  iat: number;
 }
-
 interface Client {
   id: number;
   nom: string;
@@ -106,6 +108,7 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  // const [userInfo, setUserInfo] = useState<DecodedToken | null>(null);
 
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
@@ -118,14 +121,16 @@ export default function OrdersPage() {
   const fetchOrders = async (page: number) => {
     if (!token) return;
     setLoading(true);
+    // console.log(userInfo);
+    const decoded: DecodedToken = jwtDecode(token);
+    // console.log("Utilisateur connecté ato am order:", decoded);
+    // setUserInfo(decoded);
 
     try {
-      let endpoint;
-      if (role === "ADMIN") {
-        endpoint = `${baseUrl}/api/commandes/paged?page=${page}&size=${ITEMS_PER_PAGE}`;
-      } else {
-        endpoint = `${baseUrl}/api/commandes/mes-commandes2?page=${page}&size=${ITEMS_PER_PAGE}`;
-      }
+      const endpoint =
+        decoded.role === "ADMIN"
+          ? `${baseUrl}/api/commandes/paged?page=${page}&size=${ITEMS_PER_PAGE}`
+          : `${baseUrl}/api/commandes/mes-commandes2?page=${page}&size=${ITEMS_PER_PAGE}`;
 
       const response = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` },

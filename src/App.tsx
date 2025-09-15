@@ -15,6 +15,17 @@ import UsersPage from "./pages/UsersPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import HistoriquePage from "./pages/HistoriquePage";
 import Loader from "./components/Loader";
+import CustomersPageVente from "./pages/CustomersPageVente";
+import { jwtDecode } from "jwt-decode";
+import OrdersPageVente from "./pages/OrderPageVente";
+import DashboardVentePage from "./pages/DashboardPageVente";
+
+interface DecodedToken {
+  sub: string;
+  role: string;
+  exp: number;
+  iat: number;
+}
 
 function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
@@ -22,6 +33,26 @@ function App() {
   const [showRegister, setShowRegister] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [userInfo, setUserInfo] = useState<DecodedToken | null>(null);
+
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+
+  useEffect(() => {
+    if (!token) return;
+
+    try {
+      const decoded: DecodedToken = jwtDecode(token);
+      // console.log("Utilisateur connecté :", decoded);
+      setUserInfo(decoded);
+
+      if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+        console.warn("Token expiré");
+      }
+    } catch (err) {
+      console.error("Token invalide :", err);
+    }
+  }, [token, role]);
 
   const baseUrl = import.meta.env.VITE_API_URL;
   const app_name = import.meta.env.VITE_APP_NAME;
@@ -33,11 +64,19 @@ function App() {
       case "products":
         return <ProductsPage />;
       case "customers":
-        return <CustomersPage />;
+        if (userInfo?.role === "VENTE") {
+          return <CustomersPageVente />;
+        } else {
+          return <CustomersPage />;
+        }
       case "users":
         return <UsersPage />;
       case "orders":
-        return <OrdersPage />;
+        if (userInfo?.role === "VENTE") {
+          return <OrdersPageVente />;
+        } else {
+          return <OrdersPage />;
+        }
       case "expenses":
         return <ExpensesPage />;
       case "stock":
@@ -49,7 +88,11 @@ function App() {
       case "history":
         return <HistoriquePage />;
       default:
-        return <Dashboard />;
+        if (userInfo?.role === "VENTE") {
+          return <Dashboard />;
+        } else {
+          return <DashboardVentePage />;
+        }
     }
   };
 
@@ -72,7 +115,6 @@ function App() {
     const interval = setInterval(pingBackend, 13 * 60 * 1000);
     return () => clearInterval(interval);
   }, [baseUrl]);
-
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1500);
