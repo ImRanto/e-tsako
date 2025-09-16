@@ -9,10 +9,9 @@ import {
   CreditCard,
   Truck,
   CheckCircle,
-  Clock
+  Clock,
 } from "lucide-react";
 import { Commande } from "../utils/types";
-
 
 export default function OrderModal({
   order,
@@ -28,11 +27,11 @@ export default function OrderModal({
     switch (status) {
       case "EN_ATTENTE":
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "CONFIRME":
+      case "PAYEE":
         return "bg-blue-100 text-blue-800 border-blue-200";
-      case "LIVRE":
+      case "LIVREE":
         return "bg-green-100 text-green-800 border-green-200";
-      case "ANNULE":
+      case "ANNULEE":
         return "bg-red-100 text-red-800 border-red-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
@@ -44,11 +43,11 @@ export default function OrderModal({
     switch (status) {
       case "EN_ATTENTE":
         return <Clock size={16} className="text-yellow-600" />;
-      case "CONFIRME":
+      case "PAYEE":
         return <CheckCircle size={16} className="text-blue-600" />;
-      case "LIVRE":
+      case "LIVREE":
         return <Truck size={16} className="text-green-600" />;
-      case "ANNULE":
+      case "ANNULEE":
         return <X size={16} className="text-red-600" />;
       default:
         return <Package size={16} className="text-gray-600" />;
@@ -201,7 +200,9 @@ export default function OrderModal({
               <Package size={20} className="mr-2 text-amber-600" />
               Produits commandés
             </h3>
-            <div className="border border-gray-200 rounded-xl overflow-hidden">
+
+            {/* Version Desktop */}
+            <div className="hidden sm:block border border-gray-200 rounded-xl overflow-hidden">
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
@@ -260,6 +261,44 @@ export default function OrderModal({
                   </tr>
                 </tfoot>
               </table>
+            </div>
+
+            {/* Version Mobile */}
+            <div className="sm:hidden space-y-3">
+              {order.details.map((detail) => (
+                <div
+                  key={detail.id}
+                  className="border border-gray-200 rounded-lg p-3 shadow-sm"
+                >
+                  <p className="text-sm font-semibold text-gray-900">
+                    {detail.produit.nom}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {detail.produit.categorie}
+                  </p>
+                  <div className="flex justify-between mt-2 text-sm">
+                    <span className="text-gray-600">Quantité:</span>
+                    <span className="font-medium">{detail.quantite}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Prix unitaire:</span>
+                    <span>{formatPrice(detail.produit.prixUnitaire)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Total:</span>
+                    <span className="font-bold text-green-600">
+                      {formatPrice(detail.prixTotal)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+
+              <div className="border-t border-gray-200 pt-3 mt-3 flex justify-between text-sm font-bold">
+                <span>Total</span>
+                <span className="text-green-600">
+                  {formatPrice(totalAmount)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
