@@ -116,7 +116,7 @@ export default function ResetPasswordPage({
             />
             <div className="relative">
               <input
-                type="text"
+                type={showActivation ? "text" : "password"}
                 placeholder="Clé d'activation"
                 value={activationKey}
                 onChange={(e) => setActivationKey(e.target.value)}
