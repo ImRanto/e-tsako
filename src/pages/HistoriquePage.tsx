@@ -12,6 +12,7 @@ import {
   ChevronUp,
   AlertCircle,
 } from "lucide-react";
+import Loader from "../components/Loader";
 
 interface Historique {
   id: number;
@@ -188,10 +189,7 @@ export default function HistoriquePage() {
       <div className="min-h-screen bg-gray-50 p-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <RefreshCw className="h-8 w-8 text-amber-500 animate-spin mx-auto mb-3" />
-              <p className="text-gray-600">Chargement de l'historique...</p>
-            </div>
+            <Loader />
           </div>
         </div>
       </div>

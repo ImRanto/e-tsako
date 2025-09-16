@@ -16,6 +16,7 @@ import {
 import OrderForm from "../components/OrderForm";
 import Modal from "../components/Modal";
 import { jwtDecode } from "jwt-decode";
+import Loader from "../components/Loader";
 
 interface DecodedToken {
   sub: string;
@@ -414,8 +415,8 @@ export default function OrdersPage() {
 
       {/* Liste des commandes */}
       {loading ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
+        <div className="flex justify-center items-center h-64">
+          <Loader />
         </div>
       ) : orders.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">

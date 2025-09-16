@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Calendar, TrendingUp, Download, BarChart3 } from "lucide-react";
+import Loader from "../components/Loader";
 
 interface SalesData {
   revenue: number;
@@ -116,7 +117,11 @@ export default function ReportsPage() {
     }
   };
 
-  if (loading) return <p className="p-6">Chargement des rapports...</p>;
+  if (loading) return (
+    <div className="flex items-center justify-center">
+      <Loader />
+    </div>
+  );
   if (!salesData || !expensesData) return <p className="p-6">Aucune donnée</p>;
 
   const handleExport = async () => {

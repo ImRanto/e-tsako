@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Modal from "../components/Modal";
 import StockForm, { StockData } from "../components/StockForm";
+import Loader from "../components/Loader";
 
 const baseUrl = import.meta.env.VITE_API_URL;
 
@@ -204,9 +205,8 @@ export default function StockPage() {
 
         {isLoading ? (
           <div className="flex justify-center items-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
-              <p className="text-gray-600">Chargement des stocks...</p>
+            <div className="flex items-center justify-center">
+              <Loader />
             </div>
           </div>
         ) : (

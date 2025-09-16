@@ -14,6 +14,7 @@ import {
   RefreshCw,
   AlertCircle,
 } from "lucide-react";
+import Loader from "../components/Loader";
 
 interface User {
   id?: number;
@@ -600,9 +601,8 @@ export default function UsersPage() {
 
           {/* États vides et chargement */}
           {isLoading && (
-            <div className="p-8 text-center">
-              <RefreshCw className="h-8 w-8 text-amber-500 animate-spin mx-auto mb-3" />
-              <p className="text-gray-500">Chargement des utilisateurs...</p>
+            <div className="flex items-center justify-center h-64">
+              <Loader />
             </div>
           )}
 

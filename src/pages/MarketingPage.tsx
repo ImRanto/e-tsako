@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Search, Megaphone, Facebook, MapPin, X } from "lucide-react";
 import MarketingForm from "./../components/MarketingForm";
+import Loader from "../components/Loader";
 
 interface Marketing {
   id: number;
@@ -111,7 +112,11 @@ export default function MarketingPage() {
   );
 
   if (loading) {
-    return <p className="p-6 text-gray-500">Chargement des campagnes...</p>;
+    return (
+      <div className="flex items-center justify-center">
+        <Loader />
+      </div>
+    );
   }
 
   if (error) {
