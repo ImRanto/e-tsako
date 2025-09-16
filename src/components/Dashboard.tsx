@@ -9,6 +9,7 @@ import {
 import StatCard from "./StatCard";
 import QuickActions from "./QuickActions";
 import OrderModal from "./OrderModalList";
+import Loader from "./Loader";
 
 export interface Stock {
   id: number;
@@ -136,7 +137,11 @@ export default function Dashboard() {
   }
 
   if (isLoading) {
-    return <div className="p-6 text-gray-500">Chargement...</div>;
+    return (
+      <div className="flex items-center justify-center p-6">
+        <Loader />
+      </div>
+    );
   }
 
   return (
@@ -285,7 +290,7 @@ export default function Dashboard() {
               )}
             </div>
           </div>
-          
+
           <QuickActions />
         </div>
       </div>
