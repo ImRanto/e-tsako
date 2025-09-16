@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { menuByRole } from "../config/menus";
+import { menuByRole } from "../utils/menus";
 import {
   Package,
   Menu,

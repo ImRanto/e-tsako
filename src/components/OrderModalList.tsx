@@ -11,7 +11,7 @@ import {
   CheckCircle,
   Clock
 } from "lucide-react";
-import { Commande } from "../config/types";
+import { Commande } from "../utils/types";
 
 
 export default function OrderModal({
