@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Modal from "../components/Modal";
 import ProductForm from "../components/ProductForm";
+import Loader from "../components/Loader";
 
 interface Product {
   id: number;
@@ -251,20 +252,6 @@ export default function ProductsPage() {
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
             <div className="flex items-center">
-              <div className="p-3 bg-green-100 rounded-xl mr-4">
-                <TrendingUp size={24} className="text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Valeur stock</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {totalStockValue.toLocaleString()} Ar
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <div className="flex items-center">
               <div className="p-3 bg-red-100 rounded-xl mr-4">
                 <BarChart3 size={24} className="text-red-600" />
               </div>
@@ -321,9 +308,8 @@ export default function ProductsPage() {
         {/* Products Grid */}
         {isLoading ? (
           <div className="flex justify-center items-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
-              <p className="text-gray-600">Chargement des produits...</p>
+            <div className="flex items-center justify-center">
+              <Loader />
             </div>
           </div>
         ) : sortedProducts.length === 0 ? (
@@ -401,15 +387,6 @@ export default function ProductsPage() {
                       }`}
                     >
                       {product.stockDisponible} unités
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Valeur stock</span>
-                    <span className="font-medium text-gray-900">
-                      {(
-                        product.prixUnitaire * product.stockDisponible
-                      ).toLocaleString()}{" "}
-                      Ar
                     </span>
                   </div>
                 </div>
