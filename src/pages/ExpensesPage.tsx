@@ -48,6 +48,24 @@ interface Expense {
   description: string;
 }
 
+interface ExpenseDetail extends Expense {
+  createdBy: {
+    id: number;
+    nom: string;
+    prenom: string;
+    role: string;
+    email: string;
+  } | null;
+  updatedBy: {
+    id: number;
+    nom: string;
+    prenom: string;
+    role: string;
+    email: string;
+  } | null;
+  updatedAt: string | null;
+}
+
 interface ApiResponse {
   content: Expense[];
   pageable: {
@@ -75,6 +93,12 @@ interface ApiResponse {
   first: boolean;
   numberOfElements: number;
   empty: boolean;
+}
+
+// Dans votre composant Modal (si ce n'est pas déjà fait)
+interface ModalProps {
+  // ... autres props
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 const baseUrl = import.meta.env.VITE_API_URL;
@@ -105,6 +129,11 @@ export default function ExpensesPage() {
     last: true,
     number: 0,
   });
+
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedExpenseDetail, setSelectedExpenseDetail] =
+    useState<ExpenseDetail | null>(null);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
   const itemsPerPageOptions = [5, 10, 25, 50];
 
@@ -173,6 +202,36 @@ export default function ExpensesPage() {
       setIsLoading(false);
     }
   };
+
+const fetchExpenseDetail = async (id: number) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    setError("Token d'authentification manquant");
+    return;
+  }
+
+  setIsLoadingDetail(true);
+  try {
+    const response = await fetch(`${baseUrl}/api/depenses/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Erreur lors du chargement des détails");
+    }
+
+    const data: ExpenseDetail = await response.json();
+    setSelectedExpenseDetail(data);
+    setDetailModalOpen(true);
+  } catch (err: any) {
+    console.error("Erreur fetch détails:", err);
+    setError(err.message || "Erreur inconnue");
+  } finally {
+    setIsLoadingDetail(false);
+  }
+};
 
   useEffect(() => {
     fetchExpenses();
@@ -958,6 +1017,7 @@ export default function ExpensesPage() {
                             ? "bg-amber-50"
                             : ""
                         }`}
+                        onClick={() => fetchExpenseDetail(expense.id)}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <button
@@ -1006,14 +1066,20 @@ export default function ExpensesPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex gap-2 justify-end">
                             <button
-                              onClick={() => openEditModal(expense)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditModal(expense);
+                              }}
                               className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
                               aria-label="Modifier"
                             >
                               <Edit size={14} />
                             </button>
                             <button
-                              onClick={() => handleDelete(expense.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(expense.id);
+                              }}
                               className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
                               aria-label="Supprimer"
                             >
@@ -1035,6 +1101,7 @@ export default function ExpensesPage() {
                     className={`p-4 hover:bg-gray-50 transition-colors ${
                       selectedExpenses.includes(expense.id) ? "bg-amber-50" : ""
                     }`}
+                    onClick={() => fetchExpenseDetail(expense.id)}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center">
@@ -1082,14 +1149,20 @@ export default function ExpensesPage() {
                       </span>
                       <div className="flex gap-1">
                         <button
-                          onClick={() => openEditModal(expense)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditModal(expense);
+                          }}
                           className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
                           aria-label="Modifier"
                         >
                           <Edit size={14} />
                         </button>
                         <button
-                          onClick={() => handleDelete(expense.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(expense.id);
+                          }}
                           className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
                           aria-label="Supprimer"
                         >
@@ -1117,6 +1190,108 @@ export default function ExpensesPage() {
             onSave={handleSave}
             onCancel={() => setIsModalOpen(false)}
           />
+        </Modal>
+
+        {/* Modal de détail */}
+        <Modal
+          isOpen={detailModalOpen}
+          onClose={() => setDetailModalOpen(false)}
+          title="Détails de la dépense"
+          size="lg"
+        >
+          {isLoadingDetail ? (
+            <div className="flex justify-center items-center py-8">
+              <RefreshCw className="h-8 w-8 text-amber-500 animate-spin" />
+            </div>
+          ) : selectedExpenseDetail ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500">
+                    Date
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {new Date(
+                      selectedExpenseDetail.dateDepense
+                    ).toLocaleDateString("fr-FR")}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500">
+                    Type
+                  </label>
+                  <p className="mt-1">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getTypeColor(
+                        selectedExpenseDetail.typeDepense
+                      )}`}
+                    >
+                      {getTypeLabel(selectedExpenseDetail.typeDepense)}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-500">
+                  Montant
+                </label>
+                <p className="mt-1 text-lg font-medium text-red-600">
+                  -{selectedExpenseDetail.montant.toLocaleString()} Ar
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-500">
+                  Description
+                </label>
+                <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">
+                  {selectedExpenseDetail.description}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500">
+                    Créé par
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedExpenseDetail.createdBy
+                      ? `${selectedExpenseDetail.createdBy.prenom} ${selectedExpenseDetail.createdBy.nom}`
+                      : "Non spécifié"}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-500">
+                    Modifié par
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedExpenseDetail.updatedBy
+                      ? `${selectedExpenseDetail.updatedBy.prenom} ${selectedExpenseDetail.updatedBy.nom}`
+                      : "Non modifié"}
+                  </p>
+                </div>
+              </div>
+
+              {selectedExpenseDetail.updatedAt && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-500">
+                    Dernière modification
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {new Date(selectedExpenseDetail.updatedAt).toLocaleString(
+                      "fr-FR"
+                    )}
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              Impossible de charger les détails
+            </div>
+          )}
         </Modal>
       </div>
     </div>
