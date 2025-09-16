@@ -102,7 +102,7 @@ export default function RegisterPage({
   const isFormIncomplete = !nom || !prenom || !email || !password || !secret;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-0">
+    <div className="min-h-screen flex items-center justify-center p-0">
       <div className="bg-white rounded-2xl shadow-xl overflow-hidden w-full max-w-md">
         <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-6 text-center">
           <h1 className="text-2xl font-bold text-white">{app_name}</h1>
