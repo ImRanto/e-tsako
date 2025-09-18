@@ -10,6 +10,7 @@ import {
   MapPin,
   Users,
 } from "lucide-react";
+import Loader from "../components/Loader";
 
 interface Customer {
   id: number;
@@ -144,9 +145,8 @@ export default function VentePage() {
 
         {/* Content */}
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100">
-            <Loader2 className="animate-spin text-amber-500 mb-4" size={32} />
-            <p className="text-gray-600">Chargement de vos clients...</p>
+          <div className="flex items-center justify-center">
+            <Loader />
           </div>
         ) : filtered.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
