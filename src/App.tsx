@@ -19,6 +19,7 @@ import CustomersPageVente from "./pages/CustomersPageVente";
 import { jwtDecode } from "jwt-decode";
 import OrdersPageVente from "./pages/OrderPageVente";
 import DashboardVentePage from "./pages/DashboardPageVente";
+import ProductsPageVente from "./pages/ProductPageVente";
 
 interface DecodedToken {
   sub: string;
@@ -62,7 +63,11 @@ function App() {
       case "dashboard":
         return <Dashboard />;
       case "products":
-        return <ProductsPage />;
+        if (userInfo?.role === "VENTE") {
+          return <ProductsPageVente />;
+        } else {
+          return <ProductsPage />;
+        }
       case "customers":
         if (userInfo?.role === "VENTE") {
           return <CustomersPageVente />;
