@@ -77,7 +77,6 @@ export default function HistoriquePage() {
     }
   };
 
-
   useEffect(() => {
     fetchData();
   }, []);
@@ -296,10 +295,10 @@ export default function HistoriquePage() {
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 hidden md:table-header-group">
                 <tr>
                   <th
-                    className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    className="px-4 md:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort("id")}
                   >
                     <div className="flex items-center">
@@ -308,7 +307,7 @@ export default function HistoriquePage() {
                     </div>
                   </th>
                   <th
-                    className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    className="px-4 md:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort("dateAction")}
                   >
                     <div className="flex items-center">
@@ -316,16 +315,16 @@ export default function HistoriquePage() {
                       <SortIndicator columnKey="dateAction" />
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 md:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                     Endpoint
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 md:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Méthode
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 md:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                     Utilisateur
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 md:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -333,20 +332,21 @@ export default function HistoriquePage() {
               <tbody className="divide-y divide-gray-200">
                 {filteredHistoriques.map((h) => (
                   <React.Fragment key={h.id}>
-                    <tr className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {/* Version desktop */}
+                    <tr className="hover:bg-gray-50 transition-colors hidden md:table-row">
+                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         #{h.id}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-2 text-gray-400" />
                           {new Date(h.dateAction).toLocaleString("fr-FR")}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-800 max-w-xs truncate">
+                      <td className="px-4 md:px-6 py-4 text-sm text-gray-800 max-w-xs truncate hidden lg:table-cell">
                         {h.endpoint}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 md:px-6 py-4 whitespace-nowrap">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getMethodColor(
                             h.methode
@@ -355,13 +355,13 @@ export default function HistoriquePage() {
                           {h.methode}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">
                         <div className="flex items-center">
                           <User className="h-4 w-4 mr-2 text-gray-400" />
                           {h.utilisateur}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
                           onClick={() =>
                             setExpandedRow(expandedRow === h.id ? null : h.id)
@@ -382,15 +382,71 @@ export default function HistoriquePage() {
                         </button>
                       </td>
                     </tr>
+
+                    {/* Version mobile - Card layout */}
+                    <tr className="hover:bg-gray-50 transition-colors md:hidden">
+                      <td colSpan={6} className="px-4 py-4">
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-center">
+                              <span className="text-sm font-medium text-gray-900 mr-2">
+                                #{h.id}
+                              </span>
+                              <span
+                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getMethodColor(
+                                  h.methode
+                                )}`}
+                              >
+                                {h.methode}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() =>
+                                setExpandedRow(
+                                  expandedRow === h.id ? null : h.id
+                                )
+                              }
+                              className="text-amber-600 hover:text-amber-800"
+                            >
+                              {expandedRow === h.id ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <Code className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+
+                          <div className="flex items-center text-sm text-gray-600">
+                            <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                            {new Date(h.dateAction).toLocaleDateString("fr-FR")}
+                          </div>
+
+                          <div className="text-sm">
+                            <p className="font-medium text-gray-700">
+                              Endpoint:{" "}
+                              <span className="text-gray-900 font-bold truncate">
+                                {h.endpoint}
+                              </span>
+                            </p>
+                          </div>
+
+                          <div className="flex items-center text-sm text-gray-700">
+                            <User className="h-4 w-4 mr-2 text-gray-400" />
+                            {h.utilisateur}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+
                     {expandedRow === h.id && (
                       <tr className="bg-gray-50">
-                        <td colSpan={7} className="px-6 py-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <td colSpan={6} className="px-4 md:px-6 py-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                             <div>
                               <h4 className="text-sm font-medium text-gray-700 mb-2">
                                 Payload
                               </h4>
-                              <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto text-xs">
+                              <pre className="bg-gray-100 p-3 md:p-4 rounded-lg overflow-x-auto text-xs">
                                 {formatJson(h.payload)}
                               </pre>
                             </div>
