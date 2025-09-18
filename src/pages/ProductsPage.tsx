@@ -20,7 +20,7 @@ interface Product {
   id: number;
   nom: string;
   description?: string;
-  categorie: "CHIPS" | "SNACK";
+  categorie: "CHIPS" | "SNACK" | "AUTRE";
   prixUnitaire: number;
   stockDisponible: number;
 }
@@ -292,6 +292,7 @@ export default function ProductsPage() {
                 <option value="TOUTES">Toutes les catégories</option>
                 <option value="CHIPS">Chips</option>
                 <option value="SNACK">Snacks</option>
+                <option value="AUTRE">Autre</option>
               </select>
             </div>
 
