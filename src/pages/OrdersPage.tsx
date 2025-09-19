@@ -457,7 +457,10 @@ export default function OrdersPage() {
               const isEditable =
                 order.statut !== "LIVREE" && order.statut !== "ANNULEE";
               const isDeletable =
-                order.statut === "EN_ATTENTE" || order.statut === "ANNULEE";
+                order.statut === "EN_ATTENTE" ||
+                order.statut === "ANNULEE" ||
+                order.statut === "LIVREE" ||
+                order.statut === "PAYEE";
 
               return (
                 <div

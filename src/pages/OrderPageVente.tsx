@@ -109,7 +109,7 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const [userInfo, setUserInfo] = useState<DecodedToken | null>(null);
+  // const [userInfo, setUserInfo] = useState<DecodedToken | null>(null);
 
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
@@ -122,18 +122,16 @@ export default function OrdersPage() {
   const fetchOrders = async (page: number) => {
     if (!token) return;
     setLoading(true);
-    console.log(userInfo);
+    // console.log(userInfo);
     const decoded: DecodedToken = jwtDecode(token);
-    console.log("Utilisateur connecté ato am order:", decoded);
-    setUserInfo(decoded);
+    // console.log("Utilisateur connecté ato am order:", decoded);
+    // setUserInfo(decoded);
 
     try {
-      let endpoint;
-      if (userInfo?.role === "ADMIN") {
-        endpoint = `${baseUrl}/api/commandes/paged?page=${page}&size=${ITEMS_PER_PAGE}`;
-      } else {
-        endpoint = `${baseUrl}/api/commandes/mes-commandes2?page=${page}&size=${ITEMS_PER_PAGE}`;
-      }
+      const endpoint =
+        decoded.role === "ADMIN"
+          ? `${baseUrl}/api/commandes/paged?page=${page}&size=${ITEMS_PER_PAGE}`
+          : `${baseUrl}/api/commandes/mes-commandes2?page=${page}&size=${ITEMS_PER_PAGE}`;
 
       const response = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
@@ -417,7 +415,7 @@ export default function OrdersPage() {
 
       {/* Liste des commandes */}
       {loading ? (
-        <div className="flex items-center justify-center">
+        <div className="flex justify-center items-center h-64">
           <Loader />
         </div>
       ) : orders.length === 0 ? (
@@ -455,6 +453,11 @@ export default function OrdersPage() {
                   (sum, d) => sum + (Number(d.quantite) || 0),
                   0
                 ) ?? 0;
+
+              const isEditable =
+                order.statut !== "LIVREE" && order.statut !== "ANNULEE";
+              const isDeletable =
+                order.statut === "EN_ATTENTE" || order.statut === "ANNULEE";
 
               return (
                 <div
@@ -497,17 +500,27 @@ export default function OrdersPage() {
                       <div className="lg:hidden flex gap-2">
                         <button
                           onClick={() => openEditModal(order)}
-                          className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                          className={`p-2 rounded-lg transition-colors ${
+                            isEditable
+                              ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                              : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          }`}
                           title="Modifier"
+                          disabled={!isEditable}
                         >
-                          <Edit size={16} />
+                          <Edit size={18} />
                         </button>
                         <button
                           onClick={() => handleDelete(order.id)}
-                          className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                          disabled={!isDeletable}
+                          className={`p-2 rounded-lg transition-colors ${
+                            isDeletable
+                              ? "bg-red-100 text-red-700 hover:bg-red-200"
+                              : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          }`}
                           title="Supprimer"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={18} />
                         </button>
                       </div>
                     </div>
@@ -549,18 +562,28 @@ export default function OrdersPage() {
                     <div className="hidden lg:flex items-center justify-end gap-2">
                       <button
                         onClick={() => openEditModal(order)}
-                        className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
-                        disabled={loading}
+                        className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                          isEditable
+                            ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        }`}
+                        title="Modifier"
+                        disabled={!isEditable}
                       >
-                        <Edit size={14} className="mr-1" />
+                        <Edit size={16} className="mr-1" />
                         Modifier
                       </button>
                       <button
                         onClick={() => handleDelete(order.id)}
-                        className="flex items-center px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm"
-                        disabled={loading}
+                        disabled={!isDeletable}
+                        className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                          isDeletable
+                            ? "bg-red-100 text-red-700 hover:bg-red-200"
+                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        }`}
+                        title="Supprimer"
                       >
-                        <Trash2 size={14} className="mr-1" />
+                        <Trash2 size={16} className="mr-1" />
                         Supprimer
                       </button>
                     </div>
