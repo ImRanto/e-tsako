@@ -309,6 +309,7 @@ export default function OrderForm({
 
   const total = details.reduce((sum, d) => sum + d.prixTotal, 0);
   const StatusIcon = getStatusConfig(statut).icon;
+  const isEditing = !!order; // true si on modifie, false si nouvelle commande
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
@@ -354,6 +355,7 @@ export default function OrderForm({
                 onChange={(e) => setClientId(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
                 required
+                disabled={isEditing}
               >
                 <option value="">Sélectionner un client</option>
                 {clients.map((c) => (
@@ -397,6 +399,7 @@ export default function OrderForm({
             <button
               type="button"
               onClick={handleAddDetail}
+              disabled={isEditing}
               className="inline-flex items-center px-3 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition-colors text-sm"
             >
               <Plus size={16} className="mr-1" />
@@ -423,6 +426,7 @@ export default function OrderForm({
                       </label>
                       <select
                         value={detail.produit.id}
+                        disabled={isEditing}
                         onChange={(e) =>
                           handleChangeDetail(index, "produit", e.target.value)
                         }
@@ -449,6 +453,7 @@ export default function OrderForm({
                         min="1"
                         max={detail.produit.stockDisponible}
                         value={detail.quantite}
+                        disabled={isEditing}
                         onChange={(e) =>
                           handleChangeDetail(index, "quantite", e.target.value)
                         }
@@ -476,6 +481,7 @@ export default function OrderForm({
                       onClick={() => handleRemoveDetail(index)}
                       className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                       title="Supprimer"
+                      disabled={isEditing}
                     >
                       <Trash2 size={16} />
                     </button>
