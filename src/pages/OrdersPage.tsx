@@ -454,6 +454,9 @@ export default function OrdersPage() {
                   0
                 ) ?? 0;
 
+              const isEditable =
+                order.statut !== "LIVREE" && order.statut !== "ANNULEE";
+
               return (
                 <div
                   key={order.id}
@@ -495,17 +498,27 @@ export default function OrdersPage() {
                       <div className="lg:hidden flex gap-2">
                         <button
                           onClick={() => openEditModal(order)}
-                          className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                          className={`p-2 rounded-lg transition-colors ${
+                            isEditable
+                              ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                              : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          }`}
                           title="Modifier"
+                          disabled={!isEditable}
                         >
-                          <Edit size={16} />
+                          <Edit size={18} />
                         </button>
                         <button
                           onClick={() => handleDelete(order.id)}
-                          className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                          className={`p-2 rounded-lg transition-colors ${
+                            isEditable
+                              ? "bg-red-100 text-red-700 hover:bg-red-200"
+                              : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          }`}
                           title="Supprimer"
+                          disabled={!isEditable}
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={18} />
                         </button>
                       </div>
                     </div>
@@ -547,18 +560,28 @@ export default function OrdersPage() {
                     <div className="hidden lg:flex items-center justify-end gap-2">
                       <button
                         onClick={() => openEditModal(order)}
-                        className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
-                        disabled={loading}
+                        className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                          isEditable
+                            ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        }`}
+                        title="Modifier"
+                        disabled={!isEditable}
                       >
-                        <Edit size={14} className="mr-1" />
+                        <Edit size={16} className="mr-1" />
                         Modifier
                       </button>
                       <button
                         onClick={() => handleDelete(order.id)}
-                        className="flex items-center px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm"
-                        disabled={loading}
+                        className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                          isEditable
+                            ? "bg-red-100 text-red-700 hover:bg-red-200"
+                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        }`}
+                        title="Supprimer"
+                        disabled={!isEditable}
                       >
-                        <Trash2 size={14} className="mr-1" />
+                        <Trash2 size={16} className="mr-1" />
                         Supprimer
                       </button>
                     </div>
