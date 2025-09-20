@@ -201,7 +201,7 @@ export default function OrderForm({
   ): Commande["statut"][] => {
     switch (current) {
       case "EN_ATTENTE":
-        return ["EN_ATTENTE", "ACCEPTE", "ANNULEE"];
+        return ["EN_ATTENTE", "ACCEPTE", "PAYEE", "ANNULEE"];
       case "ACCEPTE":
         return ["ACCEPTE", "PAYEE", "ANNULEE"];
       case "PAYEE":
