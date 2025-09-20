@@ -41,7 +41,7 @@ interface Commande {
   id: number;
   client: Client;
   dateCommande: string;
-  statut: "EN_ATTENTE" | "PAYEE" | "LIVREE" | "ANNULEE";
+  statut: "EN_ATTENTE" | "PAYEE" | "LIVREE" | "ANNULEE" | "ACCEPTE";
   details: DetailCommande[];
 }
 
@@ -167,6 +167,12 @@ export default function OrderForm({
           color: "text-yellow-600 bg-yellow-100",
           label: "En attente",
         };
+      case "ACCEPTE":
+        return {
+          icon: CheckCircle,
+          color: "text-purple-600 bg-purple-100",
+          label: "Acceptée",
+        };
       case "PAYEE":
         return {
           icon: CreditCard,
@@ -195,7 +201,9 @@ export default function OrderForm({
   ): Commande["statut"][] => {
     switch (current) {
       case "EN_ATTENTE":
-        return ["EN_ATTENTE", "PAYEE", "ANNULEE"];
+        return ["EN_ATTENTE", "ACCEPTE", "ANNULEE"];
+      case "ACCEPTE":
+        return ["ACCEPTE", "PAYEE", "ANNULEE"];
       case "PAYEE":
         return ["PAYEE", "LIVREE"];
       case "LIVREE":
@@ -310,6 +318,8 @@ export default function OrderForm({
   const total = details.reduce((sum, d) => sum + d.prixTotal, 0);
   const StatusIcon = getStatusConfig(statut).icon;
   const isEditing = !!order; // true si on modifie, false si nouvelle commande
+  // Déterminer si on peut modifier les détails (articles + quantités)
+  const canEditDetails = !order || order.statut === "EN_ATTENTE"; // Création ou édition en attente
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
@@ -399,7 +409,7 @@ export default function OrderForm({
             <button
               type="button"
               onClick={handleAddDetail}
-              disabled={isEditing}
+              disabled={!canEditDetails}
               className="inline-flex items-center px-3 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition-colors text-sm"
             >
               <Plus size={16} className="mr-1" />
@@ -426,7 +436,7 @@ export default function OrderForm({
                       </label>
                       <select
                         value={detail.produit.id}
-                        disabled={isEditing}
+                        disabled={!canEditDetails}
                         onChange={(e) =>
                           handleChangeDetail(index, "produit", e.target.value)
                         }
@@ -453,7 +463,7 @@ export default function OrderForm({
                         min="1"
                         max={detail.produit.stockDisponible}
                         value={detail.quantite}
-                        disabled={isEditing}
+                        disabled={!canEditDetails}
                         onChange={(e) =>
                           handleChangeDetail(index, "quantite", e.target.value)
                         }
