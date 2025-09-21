@@ -52,13 +52,13 @@ export interface Commande {
     role: string;
     email: string;
   };
-  updatedBy: {
+  updatedBy?: {
     id: number;
     nom: string;
     prenom: string;
     role: string;
     email: string;
-  };
+  } | null;
 }
 
 export interface PagedResponse {
@@ -87,7 +87,35 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
+  // 🔹 pagination states
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
   const token = localStorage.getItem("token");
+
+  const fetchWithAuth = async <T,>(url: string, setter: (data: T) => void) => {
+    try {
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setter(data);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Erreur inconnue");
+    }
+  };
+
+  const fetchOrders = async (page: number) => {
+    await fetchWithAuth<PagedResponse>(
+      `${baseUrl}/api/commandes/paged?page=${page}&size=5`,
+      (data) => {
+        setOrders(data.content);
+        setTotalPages(data.totalPages);
+      }
+    );
+  };
 
   useEffect(() => {
     if (!token) {
@@ -96,31 +124,11 @@ export default function Dashboard() {
       return;
     }
 
-    const fetchWithAuth = async <T,>(
-      url: string,
-      setter: (data: T) => void
-    ) => {
-      try {
-        const res = await fetch(url, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error(await res.text());
-        const data = await res.json();
-        setter(data);
-      } catch (err: any) {
-        console.error(err);
-        setError(err.message || "Erreur inconnue");
-      }
-    };
-
     const fetchData = async () => {
       setIsLoading(true);
       await Promise.all([
         fetchWithAuth<Stats>(`${baseUrl}/api/commandes/stats`, setStats),
-        fetchWithAuth<PagedResponse>(
-          `${baseUrl}/api/commandes/paged?page=0&size=5`,
-          (data) => setOrders(data.content)
-        ),
+        fetchOrders(page),
         fetchWithAuth<Stock[]>(
           `${baseUrl}/api/stocks/low`,
           setLowStockProducts
@@ -130,7 +138,7 @@ export default function Dashboard() {
     };
 
     fetchData();
-  }, [token]);
+  }, [token, page]); // 🔹 recharge quand page change
 
   if (error) {
     return <div className="p-6 text-red-600">{error}</div>;
@@ -233,6 +241,27 @@ export default function Dashboard() {
             ) : (
               <p className="text-center text-gray-500 py-6">Aucune commande</p>
             )}
+          </div>
+
+          {/* 🔹 Pagination */}
+          <div className="flex justify-between items-center p-4 border-t bg-gray-50">
+            <button
+              onClick={() => setPage((p) => Math.max(p - 1, 0))}
+              disabled={page === 0}
+              className="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
+            >
+              Précédent
+            </button>
+            <span className="text-sm text-gray-600">
+              Page {page + 1} sur {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))}
+              disabled={page >= totalPages - 1}
+              className="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
+            >
+              Suivant
+            </button>
           </div>
         </div>
 
