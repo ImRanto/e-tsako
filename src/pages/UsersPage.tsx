@@ -76,9 +76,14 @@ export default function UsersPage() {
         );
       }
 
-      const data: User[] = await res.json();
-      setUsers(data);
-      setFilteredUsers(data);
+      const data: any[] = await res.json();
+      const mappedUsers: User[] = data.map((u) => ({
+        ...u,
+        isActive: u.isActive ?? u.actif,
+      }));
+      setUsers(mappedUsers);
+      setFilteredUsers(mappedUsers);
+
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Erreur inconnue");
