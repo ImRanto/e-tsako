@@ -325,7 +325,7 @@ export default function OrderForm({
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900">
-          {order ? "Modifier la commande" : "Nouvelle commande"}
+          {order ? "Commande(s)" : "Nouvelle commande"}
         </h2>
         <button
           onClick={onCancel}
