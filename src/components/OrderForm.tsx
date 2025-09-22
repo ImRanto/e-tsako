@@ -13,23 +13,7 @@ import {
   ShoppingCart,
   Clock,
 } from "lucide-react";
-
-interface Client {
-  id: number;
-  nom: string;
-  typeClient: "EPICERIE" | "PARTICULIER";
-  telephone: string;
-  email: string;
-  adresse: string;
-}
-
-interface Produit {
-  id: number;
-  nom: string;
-  prixUnitaire: number;
-  categorie: "CHIPS" | "SNACK";
-  stockDisponible: number;
-}
+import { Client, Produit } from "./types/orderTypes";
 
 interface DetailCommande {
   produit: Produit;
@@ -67,7 +51,6 @@ export default function OrderForm({
   );
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const token = sessionStorage.getItem("token");

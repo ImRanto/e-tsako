@@ -3,29 +3,19 @@ import {
   Search,
   Package,
   Filter,
-  BarChart3,
   RefreshCw,
   ChevronDown,
   ChevronUp,
   TrendingUp,
   AlertTriangle,
 } from "lucide-react";
-import Loader from "../components/Loader";
-
-interface Product {
-  id: number;
-  nom: string;
-  description?: string;
-  categorie: "CHIPS" | "SNACK";
-  prixUnitaire: number;
-  stockDisponible: number;
-}
+import { Produit } from "../components/types/orderTypes";
 
 const baseUrl = import.meta.env.VITE_API_URL;
 
 export default function ProductsPageVente() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Produit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterCategory, setFilterCategory] = useState<string>("TOUTES");
   const [sortConfig, setSortConfig] = useState<{
@@ -295,13 +285,6 @@ export default function ProductsPageVente() {
                     </span>
                   </div>
                 </div>
-
-                {product.description && (
-                  <p className="text-gray-600 text-sm mb-5 line-clamp-2 relative z-10">
-                    {product.description}
-                  </p>
-                )}
-
                 <div className="space-y-3 relative z-10">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 text-sm">Prix unitaire</span>

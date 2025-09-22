@@ -18,77 +18,7 @@ import Modal from "../components/Modal";
 import { jwtDecode } from "jwt-decode";
 import Loader from "../components/Loader";
 import { DecodedToken } from "../utils/auth";
-
-interface Client {
-  id: number;
-  nom: string;
-  typeClient: "EPICERIE" | "PARTICULIER";
-  telephone: string;
-  email: string;
-  adresse: string;
-}
-
-interface Produit {
-  id: number;
-  nom: string;
-  prixUnitaire: number;
-  categorie: "CHIPS" | "SNACK";
-  stockDisponible: number;
-}
-
-interface DetailCommande {
-  id: number;
-  produit: Produit;
-  quantite: number;
-  prixTotal: number;
-}
-
-interface Utilisateur {
-  id: number;
-  nom: string;
-  prenom: string;
-  role: string;
-  email: string;
-}
-
-interface Commande {
-  id: number;
-  client: Client;
-  dateCommande: string;
-  statut: "EN_ATTENTE" | "PAYEE" | "LIVREE" | "ANNULEE";
-  details: DetailCommande[];
-  createdBy: Utilisateur;
-  updatedBy: Utilisateur | null;
-}
-
-interface ApiResponse {
-  content: Commande[];
-  pageable: {
-    pageNumber: number;
-    pageSize: number;
-    sort: {
-      empty: boolean;
-      unsorted: boolean;
-      sorted: boolean;
-    };
-    offset: number;
-    paged: boolean;
-    unpaged: boolean;
-  };
-  last: boolean;
-  totalPages: number;
-  totalElements: number;
-  size: number;
-  number: number;
-  sort: {
-    empty: boolean;
-    unsorted: boolean;
-    sorted: boolean;
-  };
-  numberOfElements: number;
-  first: boolean;
-  empty: boolean;
-}
+import { ApiResponse, Commande } from "../components/types/orderTypes";
 
 const baseUrl = import.meta.env.VITE_API_URL;
 const ITEMS_PER_PAGE = 10;
