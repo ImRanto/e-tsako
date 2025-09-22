@@ -483,8 +483,7 @@ export default function RegisterPage({
 
         <div className="bg-slate-50 px-8 py-4 border-t border-slate-200">
           <p className="text-xs text-center text-slate-500">
-            © {new Date().getFullYear()} {app_name}. Comptes administrateur
-            uniquement.
+            © {new Date().getFullYear()} compte {app_name}
           </p>
         </div>
       </div>
