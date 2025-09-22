@@ -1,19 +1,11 @@
 import { useState } from "react";
+import { RegisterResponse } from "../utils/auth";
 
 const baseUrl = import.meta.env.VITE_API_URL;
 
 interface RegisterPageProps {
   onRegisterSuccess: () => void;
   onShowLogin: () => void;
-}
-
-interface RegisterResponse {
-  id: number;
-  nom: string;
-  email: string;
-  role: string;
-  message: string;
-  token: string;
 }
 
 const app_name = import.meta.env.VITE_APP_NAME;

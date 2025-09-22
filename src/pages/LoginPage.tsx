@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { LoginResponse } from "../utils/auth";
 
 const baseUrl = import.meta.env.VITE_API_URL;
 
@@ -6,15 +7,6 @@ interface LoginPageProps {
   onLogin: () => void;
   onShowRegister: () => void;
   onShowResetPassword: () => void; // <-- ajouté
-}
-
-interface LoginResponse {
-  id: number;
-  nom: string;
-  email: string;
-  role: string;
-  message: string;
-  token: string;
 }
 
 const app_name = import.meta.env.VITE_APP_NAME || "I-TSAKY";

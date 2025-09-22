@@ -16,3 +16,22 @@ export const getUserFromToken = (token: string): DecodedToken | null => {
     return null;
   }
 };
+
+
+export interface RegisterResponse {
+  id: number;
+  nom: string;
+  email: string;
+  role: string;
+  message: string;
+  token: string;
+}
+
+export interface LoginResponse {
+  id: number;
+  nom: string;
+  email: string;
+  role: string;
+  message: string;
+  token: string;
+}
