@@ -12,6 +12,7 @@ import {
   Building,
   Truck,
 } from "lucide-react";
+import UserProfileModal from "./UserProfileModal";
 
 interface SidebarProps {
   currentPage: string;
@@ -56,6 +57,7 @@ export default function Sidebar({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const role = currentUser?.role || "VENTE";
   const menuItems = menuByRole[role] || [];
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -257,10 +259,10 @@ export default function Sidebar({
                           Générer une clé
                         </button>
                       )}
-                      {/* 
+
                       <button
                         onClick={() => {
-                          onPageChange("profile");
+                          setIsProfileModalOpen(true);
                           setDropdownOpen(false);
                           setIsOpen(false);
                         }}
@@ -268,7 +270,7 @@ export default function Sidebar({
                       >
                         <User size={16} className="mr-2 text-blue-600" />
                         Mon profil
-                      </button> */}
+                      </button>
 
                       <div className="px-3 py-2 text-xs text-gray-500 border-t border-gray-100 mt-1">
                         Session
@@ -326,6 +328,11 @@ export default function Sidebar({
           }
         `}
       </style>
+
+      <UserProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </>
   );
 }

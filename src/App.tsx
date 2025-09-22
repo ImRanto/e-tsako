@@ -122,9 +122,9 @@ function App() {
     const pingBackend = async () => {
       try {
         await fetch(`${baseUrl}/pingR`);
-        console.log("✅ Backend awake");
+        console.log("Backend awake");
       } catch (err) {
-        console.error("⚠️ Backend ping failed", err);
+        console.error("Backend ping failed", err);
       }
     };
     pingBackend();
