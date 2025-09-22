@@ -62,8 +62,8 @@ export default function LoginPage({
 
       const data: LoginResponse = await res.json();
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem(
+      sessionStorage.setItem("token", data.token);
+      sessionStorage.setItem(
         "user",
         JSON.stringify({
           id: data.id,

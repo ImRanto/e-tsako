@@ -91,7 +91,7 @@ export default function Dashboard() {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
 
   const fetchWithAuth = async <T,>(url: string, setter: (data: T) => void) => {
     try {

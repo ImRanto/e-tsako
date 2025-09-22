@@ -47,7 +47,7 @@ export default function HistoriquePage() {
   const [totalPages, setTotalPages] = useState(0);
 
   const fetchData = async (pageNumber = 0) => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) {
       setError("Utilisateur non authentifié");
       setLoading(false);

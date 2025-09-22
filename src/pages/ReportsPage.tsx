@@ -31,7 +31,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(false);
 
   const baseUrl = import.meta.env.VITE_API_URL;
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
 
   useEffect(() => {
     const fetchReports = async () => {

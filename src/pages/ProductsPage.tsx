@@ -47,7 +47,7 @@ export default function ProductsPage() {
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const response = await fetch(`${baseUrl}/api/produits`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -68,7 +68,7 @@ export default function ProductsPage() {
   // 🔹 Sauvegarde produit (create ou update)
   const handleSave = async (productData: Omit<Product, "id">) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       let savedProduct: Product;
 
       if (editingProduct) {
@@ -118,7 +118,7 @@ export default function ProductsPage() {
   const handleDelete = async (id: number) => {
     if (confirm("Êtes-vous sûr de vouloir supprimer ce produit ?")) {
       try {
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token");
         const res = await fetch(`${baseUrl}/api/produits/${id}`, {
           method: "DELETE",
           headers: {

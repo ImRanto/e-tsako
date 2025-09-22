@@ -45,7 +45,7 @@ export default function CustomerForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const baseUrl = import.meta.env.VITE_API_URL;
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
 
   // Pré-remplir si édition
   useEffect(() => {

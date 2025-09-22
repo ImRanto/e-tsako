@@ -6,36 +6,39 @@ import ContactPage from "./pages/ContactPage.tsx";
 import NotFoundPage from "./pages/NotFoundPage.tsx";
 import PageWrapper from "./components/PageWrapper.tsx";
 import "./index.css";
+import { AuthProvider } from "./context/AuthProvider.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <PageWrapper>
-              <App />
-            </PageWrapper>
-          }
-        />
-        <Route
-          path="/contact"
-          element={
-            <PageWrapper>
-              <ContactPage />
-            </PageWrapper>
-          }
-        />
-        <Route
-          path="*"
-          element={
-            <PageWrapper>
-              <NotFoundPage />
-            </PageWrapper>
-          }
-        />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <PageWrapper>
+                <App />
+              </PageWrapper>
+            }
+          />
+          <Route
+            path="/contact"
+            element={
+              <PageWrapper>
+                <ContactPage />
+              </PageWrapper>
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <PageWrapper>
+                <NotFoundPage />
+              </PageWrapper>
+            }
+          />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>
 );

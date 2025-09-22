@@ -24,7 +24,7 @@ export default function StockPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [filterCategory, setFilterCategory] = useState<string>("TOUTES");
 
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
 
   // Fetch des stocks
   const fetchStocks = async () => {

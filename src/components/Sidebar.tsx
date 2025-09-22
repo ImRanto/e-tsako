@@ -59,8 +59,8 @@ export default function Sidebar({
 
   useEffect(() => {
     const fetchUser = async () => {
-      const token = localStorage.getItem("token");
-      const savedUser = localStorage.getItem("user");
+      const token = sessionStorage.getItem("token");
+      const savedUser = sessionStorage.getItem("user");
 
       if (savedUser) {
         try {
@@ -82,7 +82,7 @@ export default function Sidebar({
         if (res.ok) {
           const data: User = await res.json();
           setCurrentUser(data);
-          localStorage.setItem("user", JSON.stringify(data));
+          sessionStorage.setItem("user", JSON.stringify(data));
         }
       } catch (err) {
         console.error("Erreur récupération utilisateur:", err);

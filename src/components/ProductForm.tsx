@@ -28,7 +28,7 @@ export default function ProductForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
 
   useEffect(() => {
     if (product) {

@@ -26,7 +26,7 @@ export default function MarketingPage() {
   );
 
   const fetchData = async () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) {
       setError("Utilisateur non authentifié !");
       setLoading(false);

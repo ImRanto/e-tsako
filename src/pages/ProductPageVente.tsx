@@ -41,7 +41,7 @@ export default function ProductsPageVente() {
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const response = await fetch(`${baseUrl}/api/produits`, {
         headers: {
           Authorization: `Bearer ${token}`,

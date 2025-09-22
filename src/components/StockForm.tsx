@@ -27,7 +27,7 @@ export default function StockForm({
   const [error, setError] = useState("");
 
   const baseUrl = import.meta.env.VITE_API_URL;
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
 
   // Options prédéfinies pour les unités
   const uniteOptions = ["KG", "LITRE", "UNITE"];

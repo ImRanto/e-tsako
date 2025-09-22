@@ -139,7 +139,7 @@ export default function ExpensesPage() {
 
   // Fetch des dépenses avec pagination
   const fetchExpenses = async () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) {
       setError("Token d'authentification manquant");
       setIsLoading(false);
@@ -204,7 +204,7 @@ export default function ExpensesPage() {
   };
 
 const fetchExpenseDetail = async (id: number) => {
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   if (!token) {
     setError("Token d'authentification manquant");
     return;
@@ -239,7 +239,7 @@ const fetchExpenseDetail = async (id: number) => {
 
   // CRUD
   const handleSave = async (expenseData: Omit<Expense, "id">) => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) {
       setError("Token d'authentification manquant");
       return;
@@ -276,7 +276,7 @@ const fetchExpenseDetail = async (id: number) => {
   };
 
   const handleDelete = async (id: number) => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) {
       setError("Token d'authentification manquant");
       return;
@@ -301,7 +301,7 @@ const fetchExpenseDetail = async (id: number) => {
   const handleBulkDelete = async () => {
     if (selectedExpenses.length === 0) return;
 
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) {
       setError("Token d'authentification manquant");
       return;

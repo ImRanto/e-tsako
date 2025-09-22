@@ -35,7 +35,7 @@ export default function CustomersPage() {
 
   // Charger depuis backend
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) return;
 
     setIsLoading(true);
@@ -55,7 +55,7 @@ export default function CustomersPage() {
 
   // Ajouter / Modifier
   const handleSave = async (customerData: Omit<Customer, "id">) => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) return;
 
     try {
@@ -95,7 +95,7 @@ export default function CustomersPage() {
 
   // Supprimer
   const handleDelete = async (id: number) => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) return;
 
     if (confirm("Êtes-vous sûr de vouloir supprimer ce client ?")) {

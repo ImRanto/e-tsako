@@ -59,7 +59,7 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       if (!token) throw new Error("Utilisateur non authentifié");
 
       const res = await fetch(`${baseUrl}/api/utilisateurs`, {
@@ -133,7 +133,7 @@ export default function UsersPage() {
       return;
 
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       if (!token) throw new Error("Utilisateur non authentifié");
 
       const res = await fetch(`${baseUrl}/api/utilisateurs/${id}`, {
@@ -160,7 +160,7 @@ export default function UsersPage() {
 
   const handleSave = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       if (!token) throw new Error("Utilisateur non authentifié");
 
       const url = editingUser?.id

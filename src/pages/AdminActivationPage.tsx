@@ -40,7 +40,7 @@ export default function AdminActivationPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [showKey, setShowKey] = useState<{ [key: number]: boolean }>({});
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
 
   const fetchKeys = async () => {
     try {

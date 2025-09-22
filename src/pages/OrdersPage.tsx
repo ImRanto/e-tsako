@@ -111,8 +111,8 @@ export default function OrdersPage() {
   const [totalElements, setTotalElements] = useState(0);
   // const [userInfo, setUserInfo] = useState<DecodedToken | null>(null);
 
-  const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
+  const token = sessionStorage.getItem("token");
+  const role = sessionStorage.getItem("role");
 
   useEffect(() => {
     if (!token) return;

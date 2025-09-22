@@ -34,7 +34,7 @@ export default function ExpenseForm({
   const [loading, setLoading] = useState(false);
 
   const baseUrl = import.meta.env.VITE_API_URL;
-  const token = localStorage.getItem("token"); // JWT
+  const token = sessionStorage.getItem("token"); // JWT
 
   useEffect(() => {
     if (expense) {

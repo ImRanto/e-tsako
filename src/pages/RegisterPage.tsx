@@ -84,8 +84,8 @@ export default function RegisterPage({
       const data: RegisterResponse = await res.json();
 
       // Sauvegarde du token et utilisateur
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data));
+      sessionStorage.setItem("token", data.token);
+      sessionStorage.setItem("user", JSON.stringify(data));
 
       setSuccess("Compte créé et connecté avec succès !");
       setTimeout(() => {

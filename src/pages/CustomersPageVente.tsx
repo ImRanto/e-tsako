@@ -31,7 +31,7 @@ export default function VentePage() {
 
   // Charger depuis backend
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) return;
 
     setIsLoading(true);
