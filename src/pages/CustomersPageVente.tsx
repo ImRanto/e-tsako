@@ -4,22 +4,13 @@ import {
   User,
   Store,
   Building,
-  Loader2,
   Phone,
   Mail,
   MapPin,
   Users,
 } from "lucide-react";
 import Loader from "../components/Loader";
-
-interface Customer {
-  id: number;
-  nom: string;
-  typeClient: "EPICERIE" | "PARTICULIER" | "RESTAURANT";
-  telephone: string;
-  email: string;
-  adresse: string;
-}
+import { Customer } from "../components/types/customerType";
 
 const baseUrl = import.meta.env.VITE_API_URL;
 
