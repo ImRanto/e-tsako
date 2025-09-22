@@ -1,40 +1,60 @@
 // src/components/QuickActions.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ShoppingCart, Package, Users } from "lucide-react";
 import StockForm, { StockData } from "./StockForm";
 import CustomerForm from "./CustomerForm";
 import OrderForm from "./OrderForm";
+import { getUserFromToken } from "../utils/auth"; // fonction pour décoder JWT
 
 export default function QuickActions() {
   const [modalOpen, setModalOpen] = useState<
     "stock" | "customer" | "order" | null
   >(null);
   const [editingStock, setEditingStock] = useState<StockData | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
+  // On récupère le rôle depuis le token
+  useEffect(() => {
+    const token = sessionStorage.getItem("token");
+    if (!token) return;
+
+    const decoded = getUserFromToken(token); // par ex. { id, nom, role, ... }
+    if (!decoded) {
+      sessionStorage.removeItem("token");
+      setUserRole(null);
+    } else {
+      setUserRole(decoded.role);
+    }
+  }, []);
+
+  // Actions possibles
   const actions = [
     {
       label: "Nouvelle commande",
       type: "order",
       icon: ShoppingCart,
       color: "bg-blue-500",
+      roles: ["ADMIN", "VENTE", "PRODUCTION", "MARKETING"],
     },
     {
       label: "Ajouter produit dans Stock",
       type: "stock",
       icon: Package,
       color: "bg-green-500",
+      roles: ["ADMIN"],
     },
     {
       label: "Nouveau client",
       type: "customer",
       icon: Users,
       color: "bg-purple-500",
+      roles: ["ADMIN"],
     },
   ];
 
   const handleOpenModal = (type: "stock" | "customer" | "order") => {
     setModalOpen(type);
-    if (type === "stock") setEditingStock(null); // reset stock pour création
+    if (type === "stock") setEditingStock(null);
   };
 
   const handleCloseModal = () => {
@@ -43,9 +63,13 @@ export default function QuickActions() {
   };
 
   const handleStockSaved = () => {
-    // tu peux ajouter un refresh de la liste de stock ici si besoin
     handleCloseModal();
   };
+
+  // Filtrer actions selon rôle
+  const availableActions = actions.filter(
+    (a) => userRole && a.roles.includes(userRole)
+  );
 
   return (
     <>
@@ -57,7 +81,7 @@ export default function QuickActions() {
         </div>
         <div className="p-6">
           <div className="space-y-3">
-            {actions.map((action) => {
+            {availableActions.map((action) => {
               const Icon = action.icon;
               return (
                 <button
