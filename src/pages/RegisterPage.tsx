@@ -32,6 +32,7 @@ export default function RegisterPage({
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showSecretKey, setShowSecretKey] = useState(false);
+  const API_KEY = import.meta.env.VITE_API_KEY;
 
   const isPasswordStrong = (password: string) => {
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
@@ -42,11 +43,9 @@ export default function RegisterPage({
     e.preventDefault();
     setError("");
     setSuccess("");
-    setIsLoading(true);
 
     if (!nom || !prenom || !email || !password || !secret) {
       setError("Veuillez remplir tous les champs !");
-      setIsLoading(false);
       return;
     }
 
@@ -54,9 +53,10 @@ export default function RegisterPage({
       setError(
         "Mot de passe faible. Minimum 8 caractères, 1 maj, 1 min, 1 chiffre."
       );
-      setIsLoading(false);
       return;
     }
+
+    setIsLoading(true);
 
     try {
       const res = await fetch(
@@ -65,39 +65,50 @@ export default function RegisterPage({
         )}`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-API-KEY": API_KEY,
+          },
           body: JSON.stringify({
             nom,
             prenom,
             email,
             motDePasse: password,
-            role: "VENTE", // ou "VENTE" selon le cas
+            role: "VENTE",
           }),
         }
       );
 
+      // Gestion des erreurs côté serveur
       if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || "Erreur lors de l'inscription");
+        let message = "Erreur lors de l'inscription";
+        try {
+          const data = await res.json();
+          if (data?.error) message = data.error; // backend envoie {error: "..."}
+          if (data?.message) message = data.message; // ou {message: "..."}
+        } catch {
+          const text = await res.text();
+          if (text) message = text;
+        }
+        setError(message);
+        return;
       }
 
+      // Si tout est OK
       const data: RegisterResponse = await res.json();
-
-      // Sauvegarde du token et utilisateur
       sessionStorage.setItem("token", data.token);
       sessionStorage.setItem("user", JSON.stringify(data));
 
       setSuccess("Compte créé et connecté avec succès !");
-      setTimeout(() => {
-        onRegisterSuccess(); // => met isAuthenticated à true
-      }, 1000);
+      setTimeout(() => onRegisterSuccess(), 1000);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Erreur lors de l'inscription");
+      setError(err.message || "Une erreur inattendue est survenue.");
     } finally {
       setIsLoading(false);
     }
   };
+
   // bouton désactivé si un champ est vide
   const isFormIncomplete = !nom || !prenom || !email || !password || !secret;
 
@@ -378,10 +389,10 @@ export default function RegisterPage({
               />
               <button
                 type="button"
-                onClick={() => setShowSecretKey(!showSecretKey)} // ✅ corrige ici
+                onClick={() => setShowSecretKey(!showSecretKey)}
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-gray-100 rounded-full hover:bg-amber-100 transition-colors flex items-center justify-center"
               >
-                {showSecretKey ? ( // ✅ utilise showSecretKey
+                {showSecretKey ? (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-5 w-5 text-amber-600"

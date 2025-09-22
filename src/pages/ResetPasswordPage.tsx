@@ -1,7 +1,8 @@
 import { useState } from "react";
 
 const baseUrl = import.meta.env.VITE_API_URL;
-const app_name = import.meta.env.VITE_APP_NAME || "I-TSAKY";
+const app_name = import.meta.env.VITE_APP_NAME;
+const API_KEY = import.meta.env.VITE_API_KEY;
 
 interface ResetPasswordPageProps {
   onShowLogin: () => void;
@@ -48,7 +49,10 @@ export default function ResetPasswordPage({
     try {
       const res = await fetch(`${baseUrl}/api/auth/reset-password`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-KEY": API_KEY,
+        },
         body: JSON.stringify({ email, activationKey, newPassword }),
       });
 

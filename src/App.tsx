@@ -38,8 +38,9 @@ function App() {
 
   const baseUrl = import.meta.env.VITE_API_URL;
   const app_name = import.meta.env.VITE_APP_NAME;
+  const API_KEY = import.meta.env.VITE_API_KEY;
 
-  // ✅ Vérifier sessionStorage au démarrage
+  // Vérifier sessionStorage au démarrage
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     if (!token) {
@@ -60,7 +61,7 @@ function App() {
         setIsAuthenticated(true);
       }
     } catch (err) {
-      console.error("❌ Token invalide :", err);
+      console.error("Token invalide :", err);
       sessionStorage.removeItem("token");
       sessionStorage.removeItem("role");
       setIsAuthenticated(false);
@@ -121,14 +122,26 @@ function App() {
   useEffect(() => {
     const pingBackend = async () => {
       try {
-        await fetch(`${baseUrl}/pingR`);
+        const res = await fetch(`${baseUrl}/pingR`, {
+          method: "GET",
+          headers: {
+            "X-API-KEY": API_KEY,
+          },
+        });
+
+        if (!res.ok) {
+          console.error("Ping failed with status", res.status);
+          return;
+        }
+
         console.log("Backend awake");
       } catch (err) {
         console.error("Backend ping failed", err);
       }
     };
+
     pingBackend();
-    const interval = setInterval(pingBackend, 13 * 60 * 1000);
+    const interval = setInterval(pingBackend, 13 * 60 * 1000); // 13 min (render free)
     return () => clearInterval(interval);
   }, [baseUrl]);
 

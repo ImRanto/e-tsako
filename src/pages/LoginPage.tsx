@@ -51,13 +51,29 @@ export default function LoginPage({
     try {
       const res = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-KEY": import.meta.env.VITE_API_KEY,
+        },
         body: JSON.stringify({ email, motDePasse: password }),
       });
 
+      if (res.status === 401) {
+        setError("Email ou mot de passe incorrect.");
+        return;
+      }
+
       if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || "Erreur lors de la connexion");
+        // Pour les autres erreurs, essaie d'extraire le message JSON
+        let message = "Erreur lors de la connexion";
+        try {
+          const data = await res.json();
+          if (data?.message) message = data.message;
+        } catch {
+          const text = await res.text();
+          if (text) message = text;
+        }
+        throw new Error(message);
       }
 
       const data: LoginResponse = await res.json();
@@ -76,11 +92,20 @@ export default function LoginPage({
       onLogin();
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Erreur lors de la connexion");
+
+      if (err.message.includes("API key")) {
+        setError(
+          "Clé API invalide ou manquante. Veuillez vérifier votre configuration."
+        );
+      } else if (!error) {
+        // Si ce n'était pas 401 déjà géré
+        setError(err.message || "Une erreur inattendue est survenue.");
+      }
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center p-0">
