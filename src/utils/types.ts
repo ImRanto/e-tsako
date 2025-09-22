@@ -30,7 +30,7 @@ export interface Commande {
     adresse: string;
   };
   dateCommande: string;
-  statut: "PAYEE" | "EN_ATTENTE" | "LIVREE";
+  statut: "PAYEE" | "EN_ATTENTE" | "LIVREE" | "ACCEPTE";
   details: CommandeDetail[];
   createdBy: {
     id: number;

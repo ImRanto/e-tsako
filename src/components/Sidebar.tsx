@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { menuByRole } from "../utils/menus";
 import {
   Package,
@@ -12,7 +12,7 @@ import {
   Building,
   Truck,
 } from "lucide-react";
-import UserProfileModal from "./UserProfileModal";
+import { UserProfileModal } from "./UserProfileModal";
 
 interface SidebarProps {
   currentPage: string;
@@ -58,6 +58,7 @@ export default function Sidebar({
   const role = currentUser?.role || "VENTE";
   const menuItems = menuByRole[role] || [];
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -266,6 +267,7 @@ export default function Sidebar({
                           setDropdownOpen(false);
                           setIsOpen(false);
                         }}
+                        ref={buttonRef}
                         className="flex items-center w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors rounded-lg"
                       >
                         <User size={16} className="mr-2 text-blue-600" />
@@ -332,6 +334,7 @@ export default function Sidebar({
       <UserProfileModal
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
+        triggerRef={buttonRef}
       />
     </>
   );
