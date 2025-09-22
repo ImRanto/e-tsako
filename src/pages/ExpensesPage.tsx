@@ -27,13 +27,7 @@ import ExpenseForm from "../components/ExpensesForm";
 import { exportToCSV, exportToPDF } from "../utils/exportUtils";
 import ExpenseCharts from "../components/chart/ExpenseChart";
 import { jwtDecode } from "jwt-decode";
-
-interface DecodedToken {
-  sub: string;
-  role: string;
-  exp: number;
-  iat: number;
-}
+import { DecodedToken } from "../utils/auth";
 
 interface Expense {
   id: number;

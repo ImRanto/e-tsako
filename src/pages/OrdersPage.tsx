@@ -17,13 +17,8 @@ import OrderForm from "../components/OrderForm";
 import Modal from "../components/Modal";
 import { jwtDecode } from "jwt-decode";
 import Loader from "../components/Loader";
+import { DecodedToken } from "../utils/auth";
 
-interface DecodedToken {
-  sub: string;
-  role: string;
-  exp: number;
-  iat: number;
-}
 interface Client {
   id: number;
   nom: string;
