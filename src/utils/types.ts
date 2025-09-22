@@ -62,3 +62,13 @@ export interface Stats {
   chiffreAffaires: number;
   totalCommandes: number;
 }
+
+export interface ActivationKey {
+  id: number;
+  keyValue: string;
+  createdAt: string;
+  used: boolean;
+  expiresAt?: string;
+  usedBy?: string;
+  usedAt?: string;
+}

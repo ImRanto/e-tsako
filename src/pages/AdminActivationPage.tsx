@@ -10,25 +10,15 @@ import {
   Search,
   Filter,
   Download,
-  MoreVertical,
   Eye,
   EyeOff,
   Calendar,
   UserCheck,
   UserX,
 } from "lucide-react";
+import { ActivationKey } from "../utils/types";
 
 const baseUrl = import.meta.env.VITE_API_URL;
-
-interface ActivationKey {
-  id: number;
-  keyValue: string;
-  createdAt: string;
-  used: boolean;
-  expiresAt?: string;
-  usedBy?: string;
-  usedAt?: string;
-}
 
 export default function AdminActivationPage() {
   const [keys, setKeys] = useState<ActivationKey[]>([]);
