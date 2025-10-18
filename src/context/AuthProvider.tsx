@@ -1,4 +1,3 @@
-// src/context/AuthContext.tsx
 import { createContext, useContext, useEffect, useState } from "react";
 
 interface AuthContextType {
@@ -12,26 +11,64 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null);
 
-  useEffect(() => {
-    // Charger l'utilisateur depuis sessionStorage au refresh
+  // Fonction pour synchroniser l'état d'authentification
+  const syncAuthState = () => {
     const storedUser = sessionStorage.getItem("user");
     const storedToken = sessionStorage.getItem("token");
 
     if (storedUser && storedToken) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Error parsing saved user:", e);
+        setUser(null);
+      }
+    } else {
+      setUser(null);
     }
+  };
+
+  useEffect(() => {
+    // Synchroniser au chargement initial
+    syncAuthState();
+
+    // Écouter les changements de sessionStorage entre les onglets
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "user" || e.key === "token") {
+        syncAuthState();
+      }
+    };
+
+    // Écouter les événements de storage (entre onglets)
+    window.addEventListener("storage", handleStorageChange);
+
+    // Écouter les événements personnalisés (même onglet)
+    const handleAuthChange = () => {
+      syncAuthState();
+    };
+
+    window.addEventListener("authStateChange", handleAuthChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("authStateChange", handleAuthChange);
+    };
   }, []);
 
   const login = (userData: any, token: string) => {
     sessionStorage.setItem("user", JSON.stringify(userData));
     sessionStorage.setItem("token", token);
     setUser(userData);
+    // Déclencher l'événement pour synchroniser tous les composants
+    window.dispatchEvent(new Event("authStateChange"));
   };
 
   const logout = () => {
     sessionStorage.removeItem("user");
     sessionStorage.removeItem("token");
     setUser(null);
+    // Déclencher l'événement pour synchroniser tous les composants
+    window.dispatchEvent(new Event("authStateChange"));
   };
 
   return (

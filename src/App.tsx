@@ -57,7 +57,7 @@ function App() {
           <Sidebar
             currentPage={currentPage}
             onPageChange={setCurrentPage}
-            onLogout={handleLogout}
+            // onLogout={handleLogout}
           />
           <main className="flex-1 lg:ml-72 transition-all duration-300">
             {currentPage === "admin" ? (

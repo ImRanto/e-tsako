@@ -13,11 +13,12 @@ import {
   Truck,
 } from "lucide-react";
 import { UserProfileModal } from "./UserProfileModal";
+import { useAuth } from "../context/AuthProvider";
+import { useNavigate } from "react-router-dom";
 
 interface SidebarProps {
   currentPage: string;
   onPageChange: (page: string) => void;
-  onLogout: () => void;
   isAdmin?: boolean;
 }
 
@@ -46,32 +47,23 @@ const roleColors = {
   MARKETING: "bg-orange-100 text-orange-800",
 };
 
-export default function Sidebar({
-  currentPage,
-  onPageChange,
-  onLogout,
-}: SidebarProps) {
+export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const role = currentUser?.role || "VENTE";
-  const menuItems = menuByRole[role] || [];
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const navigate = useNavigate();
 
+  // Utilisation du contexte d'authentification
+  const { user, logout } = useAuth();
+
+  const role = user?.role || "VENTE";
+  const menuItems = menuByRole[role] || [];
+
+  // Synchronisation avec l'API pour les données utilisateur fraîches
   useEffect(() => {
     const fetchUser = async () => {
       const token = sessionStorage.getItem("token");
-      const savedUser = sessionStorage.getItem("user");
-
-      if (savedUser) {
-        try {
-          setCurrentUser(JSON.parse(savedUser));
-        } catch (e) {
-          console.error("Error parsing saved user:", e);
-        }
-      }
 
       if (!token) return;
 
@@ -84,8 +76,9 @@ export default function Sidebar({
 
         if (res.ok) {
           const data: User = await res.json();
-          setCurrentUser(data);
           sessionStorage.setItem("user", JSON.stringify(data));
+          // Déclencher une mise à jour du contexte
+          window.dispatchEvent(new Event("authStateChange"));
         }
       } catch (err) {
         console.error("Erreur récupération utilisateur:", err);
@@ -106,6 +99,26 @@ export default function Sidebar({
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, [dropdownOpen]);
+
+  const handleLogout = () => {
+    logout(); // Utilise la fonction du contexte qui synchronisera automatiquement
+    setDropdownOpen(false);
+    setIsOpen(false);
+
+    navigate("/");
+  };
+
+  const handleAdminClick = () => {
+    onPageChange("admin");
+    setDropdownOpen(false);
+    setIsOpen(false);
+  };
+
+  const handleProfileClick = () => {
+    setIsProfileModalOpen(true);
+    setDropdownOpen(false);
+    setIsOpen(false);
+  };
 
   return (
     <>
@@ -187,7 +200,7 @@ export default function Sidebar({
 
           {/* User info + Dropdown */}
           <div className="p-4 border-t border-gray-100 bg-white">
-            {currentUser ? (
+            {user ? (
               <div className="relative">
                 <button
                   onClick={(e) => {
@@ -198,19 +211,17 @@ export default function Sidebar({
                 >
                   <div className="relative">
                     <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center text-white font-semibold shadow-md">
-                      {currentUser.nom
-                        ? currentUser.nom.charAt(0).toUpperCase()
-                        : "U"}
+                      {user.nom ? user.nom.charAt(0).toUpperCase() : "U"}
                     </div>
                     <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
                   </div>
 
                   <div className="ml-3 text-left flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900 truncate">
-                      {currentUser.nom || "Utilisateur"}
+                      {user.nom || "Utilisateur"}
                     </p>
                     <p className="text-xs text-gray-500 truncate">
-                      {currentUser.email || "inconnu@example.com"}
+                      {user.email || "inconnu@example.com"}
                     </p>
                     <div className="flex items-center mt-1">
                       <span
@@ -248,12 +259,7 @@ export default function Sidebar({
 
                       {role === "ADMIN" && (
                         <button
-                          onClick={() => {
-                            setIsAuthenticated(true);
-                            onPageChange("admin");
-                            setDropdownOpen(false);
-                            setIsOpen(false);
-                          }}
+                          onClick={handleAdminClick}
                           className="flex items-center w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors rounded-lg"
                         >
                           <Key size={16} className="mr-2 text-purple-600" />
@@ -262,11 +268,7 @@ export default function Sidebar({
                       )}
 
                       <button
-                        onClick={() => {
-                          setIsProfileModalOpen(true);
-                          setDropdownOpen(false);
-                          setIsOpen(false);
-                        }}
+                        onClick={handleProfileClick}
                         ref={buttonRef}
                         className="flex items-center w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors rounded-lg"
                       >
@@ -279,7 +281,7 @@ export default function Sidebar({
                       </div>
 
                       <button
-                        onClick={onLogout}
+                        onClick={handleLogout}
                         className="flex items-center w-full px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors rounded-lg"
                       >
                         <LogOut size={16} className="mr-2" />
@@ -295,7 +297,10 @@ export default function Sidebar({
                   <User size={24} className="text-gray-400" />
                 </div>
                 <p className="text-sm text-gray-500">Non connecté</p>
-                <button className="mt-2 text-sm text-amber-600 hover:text-amber-700 font-medium">
+                <button
+                  onClick={() => (window.location.href = "/login")}
+                  className="mt-2 text-sm text-amber-600 hover:text-amber-700 font-medium"
+                >
                   Se connecter
                 </button>
               </div>
