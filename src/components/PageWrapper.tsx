@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Loader from "./Loader";
+import ScrollToTop from "./ScrollToTop";
 
 interface PageWrapperProps {
   children: React.ReactNode;
@@ -18,5 +19,10 @@ export default function PageWrapper({
   }, [delay]);
 
   if (isLoading) return <Loader />;
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <ScrollToTop />
+    </>
+  );
 }
