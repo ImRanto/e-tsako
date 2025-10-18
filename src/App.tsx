@@ -16,9 +16,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [userInfo, setUserInfo] = useState<DecodedToken | null>(null);
 
-  const baseUrl = import.meta.env.VITE_API_URL;
   const app_name = import.meta.env.VITE_APP_NAME;
-  const API_KEY = import.meta.env.VITE_API_KEY;
 
   // Vérifier sessionStorage au démarrage
   useEffect(() => {
@@ -37,28 +35,9 @@ function App() {
     }
   }, []);
 
-  // Ping backend régulièrement
-  useEffect(() => {
-    const pingBackend = async () => {
-      try {
-        const res = await fetch(`${baseUrl}/pingR`, {
-          method: "GET",
-          headers: { "X-API-KEY": API_KEY },
-        });
-        if (!res.ok) console.error("Ping failed with status", res.status);
-      } catch (err) {
-        console.error("Backend ping failed", err);
-      }
-    };
-
-    pingBackend();
-    const interval = setInterval(pingBackend, 13 * 60 * 1000); // toutes les 13 min
-    return () => clearInterval(interval);
-  }, [baseUrl]);
-
   // Loader initial
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1500);
+    const timer = setTimeout(() => setIsLoading(false), 10);
     return () => clearTimeout(timer);
   }, []);
 
