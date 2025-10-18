@@ -28,6 +28,7 @@ export default function LandingPage() {
     const interval = setInterval(pingBackend, 13 * 60 * 1000); // toutes les 13 min
     return () => clearInterval(interval);
   }, [baseUrl]);
+
   return (
     <div className="min-h-screen bg-white">
       <Header />
