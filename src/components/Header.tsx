@@ -179,7 +179,7 @@ export default function Header() {
                   </div>
 
                   <Link
-                    to="/dashboard"
+                    to="/login"
                     className="flex items-center w-full py-3 text-gray-700 border-t border-gray-100"
                     onClick={() => setIsMenuOpen(false)}
                   >
