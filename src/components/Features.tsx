@@ -55,7 +55,7 @@ export default function Features() {
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Notre plateforme offre tous les outils nécessaires pour gérer
-            efficacement tous cconcerne sur la vente
+            efficacement tous concerne sur la vente
           </p>
         </div>
 
