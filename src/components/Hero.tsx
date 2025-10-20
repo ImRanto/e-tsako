@@ -18,14 +18,13 @@ export default function Hero() {
             </div>
 
             <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              Gérez bien le business{" "}
-              <span className="text-amber-500">{app_name}</span> comme un pro
+              Gérez bien le business avec {" "}
+              <span className="text-amber-500">{app_name}</span>
             </h1>
 
             <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-              Solution complète de gestion pour votre entreprise de chips
-              artisanales. Suivez vos ventes, gérez vos stocks et développez
-              votre clientèle avec notre plateforme intuitive.
+              Solution complète de gestion de vos ventes, gérez vos stocks et développez
+              les clientèle avec ce plateforme intuitive.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -61,9 +60,9 @@ export default function Hero() {
 
               <div className="space-y-4">
                 {[
-                  { name: "Chips", growth: "+15%" },
+                  { name: "Chips", growth: "+5%" },
                   { name: "Croquêtte", growth: "+8%" },
-                  { name: "Arachide special", growth: "+22%" },
+                  { name: "Arachide special", growth: "+10%" },
                 ].map((product, index) => (
                   <div
                     key={index}
