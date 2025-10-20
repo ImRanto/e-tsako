@@ -1,8 +1,8 @@
 // components/Stats.jsx
 export default function Stats() {
   const stats = [
-    { number: "500+", label: "Commandes traitées" },
-    { number: "50+", label: "Clients satisfaits" },
+    { number: "100+", label: "Commandes traitées" },
+    { number: "20+", label: "Clients satisfaits" },
     { number: "99.9%", label: "Disponibilité" },
     { number: "24/7", label: "Support technique" },
   ];
