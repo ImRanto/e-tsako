@@ -24,44 +24,80 @@ export default function CustomersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [filterType, setFilterType] = useState<string>("ALL");
   const [mobileMenuOpen, setMobileMenuOpen] = useState<number | null>(null);
+  const [error, setError] = useState("");
 
-  // Charger depuis backend
+  // Charger depuis backend avec gestion d'erreur améliorée
   useEffect(() => {
-    const token = sessionStorage.getItem("token");
-    if (!token) return;
+    const fetchCustomers = async () => {
+      const token = sessionStorage.getItem("token");
+      if (!token) {
+        setError("Utilisateur non authentifié");
+        setIsLoading(false);
+        return;
+      }
 
-    setIsLoading(true);
-    fetch(`${baseUrl}/api/clients`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Erreur de chargement");
-        return res.json();
-      })
-      .then((data: Customer[]) => setCustomers(data))
-      .catch((err) => console.error("Erreur fetch clients:", err))
-      .finally(() => setIsLoading(false));
+      setIsLoading(true);
+      setError("");
+
+      try {
+        const res = await fetch(`${baseUrl}/api/clients`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(
+            `Erreur ${res.status}: ${errorText || "Échec du chargement"}`
+          );
+        }
+
+        const data: Customer[] = await res.json();
+        setCustomers(data);
+      } catch (err: any) {
+        console.error("Erreur fetch clients:", err);
+        setError(err.message || "Erreur lors du chargement des clients");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCustomers();
   }, []);
 
-  // Ajouter / Modifier
+  // Ajouter / Modifier avec gestion d'erreur
   const handleSave = async (customerData: Omit<Customer, "id">) => {
     const token = sessionStorage.getItem("token");
-    if (!token) return;
+    if (!token) {
+      setError("Utilisateur non authentifié");
+      return;
+    }
 
     try {
       if (editingCustomer) {
         // UPDATE
-        const updated = { ...editingCustomer, ...customerData };
-        await fetch(`${baseUrl}/api/clients/${editingCustomer.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(updated),
-        });
+        const res = await fetch(
+          `${baseUrl}/api/clients/${editingCustomer.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(customerData),
+          }
+        );
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(
+            `Erreur ${res.status}: ${errorText || "Échec de la modification"}`
+          );
+        }
+
+        const updated: Customer = await res.json();
         setCustomers(
           customers.map((c) => (c.id === editingCustomer.id ? updated : c))
         );
@@ -75,32 +111,56 @@ export default function CustomersPage() {
           },
           body: JSON.stringify(customerData),
         });
-        const newCustomer = await res.json();
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(
+            `Erreur ${res.status}: ${errorText || "Échec de la création"}`
+          );
+        }
+
+        const newCustomer: Customer = await res.json();
         setCustomers([...customers, newCustomer]);
       }
+
       setIsModalOpen(false);
       setEditingCustomer(null);
-    } catch (error) {
+      setError(""); // Clear error on success
+    } catch (error: any) {
       console.error("Erreur sauvegarde client:", error);
+      setError(error.message || "Erreur lors de la sauvegarde");
     }
   };
 
-  // Supprimer
+  // Supprimer avec gestion d'erreur
   const handleDelete = async (id: number) => {
     const token = sessionStorage.getItem("token");
-    if (!token) return;
+    if (!token) {
+      setError("Utilisateur non authentifié");
+      return;
+    }
 
     if (confirm("Êtes-vous sûr de vouloir supprimer ce client ?")) {
       try {
-        await fetch(`${baseUrl}/api/clients/${id}`, {
+        const res = await fetch(`${baseUrl}/api/clients/${id}`, {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(
+            `Erreur ${res.status}: ${errorText || "Échec de la suppression"}`
+          );
+        }
+
         setCustomers(customers.filter((c) => c.id !== id));
-      } catch (error) {
+        setError(""); // Clear error on success
+      } catch (error: any) {
         console.error("Erreur suppression client:", error);
+        setError(error.message || "Erreur lors de la suppression");
       }
     }
   };
@@ -110,8 +170,10 @@ export default function CustomersPage() {
     const matchesSearch =
       customer.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer.telephone.includes(searchTerm) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.adresse.toLowerCase().includes(searchTerm.toLowerCase());
+      (customer.email &&
+        customer.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (customer.adresse &&
+        customer.adresse.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesType =
       filterType === "ALL" || customer.typeClient === filterType;
@@ -133,11 +195,11 @@ export default function CustomersPage() {
   const getCustomerColor = (type: string) => {
     switch (type) {
       case "EPICERIE":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 text-blue-800 border border-blue-200";
       case "RESTAURANT":
-        return "bg-purple-100 text-purple-800";
+        return "bg-purple-100 text-purple-800 border border-purple-200";
       default:
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 text-green-800 border border-green-200";
     }
   };
 
@@ -162,6 +224,13 @@ export default function CustomersPage() {
           Nouveau client
         </button>
       </div>
+
+      {/* Affichage des erreurs */}
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
+          <p className="text-red-700 text-sm">{error}</p>
+        </div>
+      )}
 
       {/* Search and Filters */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 lg:p-6 mb-6">
@@ -220,7 +289,9 @@ export default function CustomersPage() {
             <Search size={48} className="mx-auto" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Aucun client trouvé
+            {searchTerm || filterType !== "ALL"
+              ? "Aucun client trouvé"
+              : "Aucun client"}
           </h3>
           <p className="text-gray-600 mb-4">
             {searchTerm || filterType !== "ALL"
@@ -293,11 +364,15 @@ export default function CustomersPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <div>
                           <p className="font-medium">{customer.telephone}</p>
-                          <p className="text-gray-500">{customer.email}</p>
+                          {customer.email && (
+                            <p className="text-gray-500">{customer.email}</p>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
-                        <p className="truncate">{customer.adresse}</p>
+                        <p className="truncate">
+                          {customer.adresse || "Non renseignée"}
+                        </p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex gap-2">
@@ -422,6 +497,7 @@ export default function CustomersPage() {
         onClose={() => {
           setIsModalOpen(false);
           setEditingCustomer(null);
+          setError("");
         }}
         title={editingCustomer ? "Modifier le client" : "Nouveau client"}
       >
@@ -431,6 +507,7 @@ export default function CustomersPage() {
           onCancel={() => {
             setIsModalOpen(false);
             setEditingCustomer(null);
+            setError("");
           }}
         />
       </Modal>
