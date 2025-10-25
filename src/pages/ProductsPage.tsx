@@ -9,8 +9,6 @@ import {
   TrendingUp,
   BarChart3,
   RefreshCw,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import Modal from "../components/Modal";
 import ProductForm from "../components/ProductForm";
@@ -23,6 +21,8 @@ interface Product {
   categorie: "CHIPS" | "SNACK" | "AUTRE";
   prixUnitaire: number;
   stockDisponible: number;
+  imageData?: string;
+  imageType?: string;
 }
 
 const baseUrl = import.meta.env.VITE_API_URL;
@@ -34,10 +34,6 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterCategory, setFilterCategory] = useState<string>("TOUTES");
-  const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: "ascending" | "descending";
-  } | null>(null);
 
   // 🔹 Récupération initiale
   useEffect(() => {
@@ -65,52 +61,26 @@ export default function ProductsPage() {
     }
   };
 
-  // 🔹 Sauvegarde produit (create ou update)
-  const handleSave = async (productData: Omit<Product, "id">) => {
+  // 🔹 CORRECTION : Sauvegarde produit - juste mise à jour de l'état local
+  const handleSave = async (savedProduct: Product) => {
     try {
-      const token = sessionStorage.getItem("token");
-      let savedProduct: Product;
-
       if (editingProduct) {
-        // PUT vers backend
-        const res = await fetch(
-          `${baseUrl}/api/produits/${editingProduct.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(productData),
-          }
-        );
-        if (!res.ok) throw new Error("Erreur modification produit");
-        savedProduct = await res.json();
-
+        // Mise à jour d'un produit existant
         setProducts(
           products.map((p) => (p.id === editingProduct.id ? savedProduct : p))
         );
       } else {
-        // POST vers backend
-        const res = await fetch(`${baseUrl}/api/produits`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(productData),
-        });
-        if (!res.ok) throw new Error("Erreur création produit");
-        savedProduct = await res.json();
-
+        // Ajout d'un nouveau produit
         setProducts([...products, savedProduct]);
       }
 
       setIsModalOpen(false);
       setEditingProduct(null);
+
+      // Optionnel : rafraîchir les données pour être sûr
+      // fetchProducts();
     } catch (err) {
-      console.error("Erreur lors de la sauvegarde :", err);
-      alert("Échec de la sauvegarde du produit");
+      console.error("Erreur lors de la mise à jour de l'état:", err);
     }
   };
 
@@ -134,32 +104,7 @@ export default function ProductsPage() {
     }
   };
 
-  // 🔹 Tri des produits
-  const handleSort = (key: string) => {
-    let direction: "ascending" | "descending" = "ascending";
-    if (
-      sortConfig &&
-      sortConfig.key === key &&
-      sortConfig.direction === "ascending"
-    ) {
-      direction = "descending";
-    }
-    setSortConfig({ key, direction });
-  };
-
-  // 🔹 Icône de tri
-  const SortIcon = ({ columnKey }: { columnKey: string }) => {
-    if (!sortConfig || sortConfig.key !== columnKey) {
-      return <ChevronDown size={14} className="opacity-50" />;
-    }
-    return sortConfig.direction === "ascending" ? (
-      <ChevronUp size={14} />
-    ) : (
-      <ChevronDown size={14} />
-    );
-  };
-
-  // 🔹 Filtrage et tri des produits
+  // 🔹 Filtrage des produits
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -171,24 +116,6 @@ export default function ProductsPage() {
 
     return matchesSearch && matchesCategory;
   });
-
-  // 🔹 Tri des produits
-  const sortedProducts = [...filteredProducts];
-  if (sortConfig !== null) {
-    sortedProducts.sort((a, b) => {
-      if (
-        a[sortConfig.key as keyof Product] < b[sortConfig.key as keyof Product]
-      ) {
-        return sortConfig.direction === "ascending" ? -1 : 1;
-      }
-      if (
-        a[sortConfig.key as keyof Product] > b[sortConfig.key as keyof Product]
-      ) {
-        return sortConfig.direction === "ascending" ? 1 : -1;
-      }
-      return 0;
-    });
-  }
 
   // 🔹 Statistiques
   const totalProducts = products.length;
@@ -275,7 +202,6 @@ export default function ProductsPage() {
             </div>
           </div>
 
-          {/* Nouvelle carte statistique */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-300 hover:shadow-md hover:border-green-100">
             <div className="flex items-center">
               <div className="p-3 bg-gradient-to-br from-green-50 to-green-100 rounded-xl mr-4 shadow-inner">
@@ -347,7 +273,7 @@ export default function ProductsPage() {
           <div className="flex items-center justify-center">
             <Loader />
           </div>
-        ) : sortedProducts.length === 0 ? (
+        ) : filteredProducts.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
             <div className="text-gray-200 mb-4">
               <Package size={64} className="mx-auto opacity-50" />
@@ -372,18 +298,31 @@ export default function ProductsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedProducts.map((product) => (
+            {filteredProducts.map((product) => (
               <div
                 key={product.id}
                 className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-300 group hover:border-amber-100 relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-50 to-orange-50 rounded-bl-2xl transform translate-x-6 -translate-y-6 rotate-45 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
+                {/* Aperçu de l'image si disponible */}
+                {product.imageData && product.imageType && (
+                  <div className="mb-4 relative z-10">
+                    <img
+                      src={`data:${product.imageType};base64,${product.imageData}`}
+                      alt={product.nom}
+                      className="w-full h-32 object-cover rounded-xl border border-gray-200"
+                    />
+                  </div>
+                )}
+
                 <div className="flex items-start justify-between mb-5 relative z-10">
                   <div className="flex items-center">
-                    <div className="p-3 bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl mr-4 shadow-inner">
-                      <Package size={24} className="text-amber-600" />
-                    </div>
+                    {!product.imageData && (
+                      <div className="p-3 bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl mr-4 shadow-inner">
+                        <Package size={24} className="text-amber-600" />
+                      </div>
+                    )}
                     <div>
                       <h3 className="font-semibold text-gray-900 text-lg truncate max-w-[160px]">
                         {product.nom}

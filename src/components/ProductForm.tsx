@@ -6,6 +6,8 @@ interface Product {
   categorie: "CHIPS" | "SNACK" | "AUTRE";
   prixUnitaire: number;
   stockDisponible: number;
+  imageData?: string;
+  imageType?: string;
 }
 
 interface ProductFormProps {
@@ -22,11 +24,15 @@ export default function ProductForm({
   onCancel,
 }: ProductFormProps) {
   const [nom, setNom] = useState("");
-  const [categorie, setCategorie] = useState<"CHIPS" | "SNACK" | "AUTRE">("CHIPS");
+  const [categorie, setCategorie] = useState<"CHIPS" | "SNACK" | "AUTRE">(
+    "CHIPS"
+  );
   const [prixUnitaire, setPrixUnitaire] = useState<number>(0);
   const [stockDisponible, setStockDisponible] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const token = sessionStorage.getItem("token");
 
@@ -36,14 +42,63 @@ export default function ProductForm({
       setCategorie(product.categorie);
       setPrixUnitaire(product.prixUnitaire);
       setStockDisponible(product.stockDisponible);
+
+      // Réinitialiser les états d'image
+      setImage(null);
+      setImagePreview(null);
+
+      // Si le produit a déjà une image, créer l'URL de prévisualisation
+      if (product.imageData && product.imageType) {
+        const imageUrl = `data:${product.imageType};base64,${product.imageData}`;
+        setImagePreview(imageUrl);
+      }
     } else {
       setNom("");
       setCategorie("CHIPS");
       setPrixUnitaire(0);
       setStockDisponible(0);
+      setImage(null);
+      setImagePreview(null);
     }
     setError("");
   }, [product]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validation du type de fichier
+      if (!file.type.startsWith("image/")) {
+        setError("Veuillez sélectionner un fichier image valide !");
+        return;
+      }
+
+      // Validation de la taille (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError("L'image ne doit pas dépasser 5MB !");
+        return;
+      }
+
+      setImage(file);
+      setError("");
+
+      // Créer l'URL de prévisualisation
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImage(null);
+    setImagePreview(null);
+
+    // Réinitialiser l'input file
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = "";
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,35 +128,69 @@ export default function ProductForm({
     setError("");
 
     try {
-      const payload = {
-        nom: nom.trim(),
-        categorie,
-        prixUnitaire,
-        stockDisponible,
-      };
+      const formData = new FormData();
+      formData.append("nom", nom.trim());
+      formData.append("categorie", categorie);
+      formData.append("prixUnitaire", prixUnitaire as any);
+      formData.append("stockDisponible", stockDisponible as any);
+
+      // CORRECTION : Bien vérifier l'image
+      if (image) {
+        // console.log("Image à envoyer:", image.name, image.type, image.size);
+        formData.append("image", image);
+      } else {
+        // console.log("Aucune image sélectionnée");
+      }
+
+      // Debug: afficher le contenu du FormData
+      // console.log("Contenu du FormData:");
+      // for (let [key, value] of formData.entries()) {
+      // console.log(key, value);
+      // }
 
       const url = product
         ? `${baseUrl}/api/produits/${product.id}`
         : `${baseUrl}/api/produits`;
 
+      const method = product ? "PUT" : "POST";
+
       const res = await fetch(url, {
-        method: product ? "PUT" : "POST",
+        method,
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          // NE PAS mettre Content-Type pour FormData
         },
-        body: JSON.stringify(payload),
+        body: formData,
       });
 
       if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`Erreur API (${res.status}) : ${txt || "inconnue"}`);
+        const errorText = await res.text();
+        let errorMessage = `Erreur API (${res.status}) : ${
+          errorText || "inconnue"
+        }`;
+
+        if (res.status === 401) {
+          errorMessage = "Session expirée. Veuillez vous reconnecter.";
+        } else if (res.status === 413) {
+          errorMessage = "L'image est trop volumineuse. Maximum 5MB autorisé.";
+        } else if (res.status === 415) {
+          errorMessage = "Format d'image non supporté.";
+        }
+
+        throw new Error(errorMessage);
       }
 
       const saved: Product = await res.json();
+      // console.log("Produit sauvegardé:", saved);
+
+      // Nettoyer les URLs de prévisualisation
+      if (imagePreview && imagePreview.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreview);
+      }
+
       onSave(saved);
     } catch (err: any) {
-      console.error(err);
+      console.error("Erreur lors de l'enregistrement:", err);
       setError(
         err.message ||
           "Échec de l'enregistrement du produit. Vérifiez le backend."
@@ -110,6 +199,15 @@ export default function ProductForm({
       setLoading(false);
     }
   };
+
+  // Nettoyer les URLs de prévisualisation lors du démontage
+  useEffect(() => {
+    return () => {
+      if (imagePreview && imagePreview.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 max-w-2xl mx-auto">
@@ -203,6 +301,51 @@ export default function ProductForm({
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors"
             />
           </div>
+
+          {/* Image du produit */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Image du produit
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+            />
+
+            <p className="text-sm text-gray-500 mt-1">
+              Formats supportés: JPG, PNG, WebP. Taille max: 5MB
+            </p>
+
+            {/* Aperçu de l'image */}
+            {(imagePreview || (product?.imageData && !image)) && (
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-700 mb-2">
+                  Aperçu:
+                </p>
+                <div className="flex items-center gap-4">
+                  <img
+                    src={
+                      imagePreview ||
+                      (product?.imageData && product?.imageType
+                        ? `data:${product.imageType};base64,${product.imageData}`
+                        : "")
+                    }
+                    alt="Aperçu du produit"
+                    className="h-24 w-24 object-cover rounded-lg border border-gray-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="text-red-500 hover:text-red-700 underline text-sm font-medium"
+                  >
+                    Supprimer l'image
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Actions */}
@@ -218,7 +361,7 @@ export default function ProductForm({
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium flex items-center justify-center"
+            className="px-6 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium flex items-center justify-center min-w-[140px]"
           >
             {loading ? (
               <>
