@@ -16,7 +16,7 @@ import DashboardVentePage from "../pages/DashboardPageVente";
 export const renderPage = (currentPage: string, role?: string) => {
   switch (currentPage) {
     case "dashboard":
-      return <Dashboard />;
+      return role === "VENTE" ? <DashboardVentePage /> : <Dashboard />;
     case "products":
       return role === "VENTE" ? <ProductsPageVente /> : <ProductsPage />;
     case "customers":
@@ -36,6 +36,6 @@ export const renderPage = (currentPage: string, role?: string) => {
     case "history":
       return <HistoriquePage />;
     default:
-      return role === "VENTE" ? <Dashboard /> : <DashboardVentePage />;
+      return role === "VENTE" ? <DashboardVentePage /> : <Dashboard />;
   }
 };
