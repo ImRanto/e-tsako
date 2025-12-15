@@ -13,29 +13,43 @@ import UsersPage from "../pages/UsersPage";
 import HistoriquePage from "../pages/HistoriquePage";
 import DashboardVentePage from "../pages/DashboardPageVente";
 
+const normalizeRole = (role?: string) => role?.trim().toUpperCase() ?? "ADMIN";
+
 export const renderPage = (currentPage: string, role?: string) => {
+  const userRole = normalizeRole(role);
+
   switch (currentPage) {
     case "dashboard":
-      return role === "VENTE" ? <DashboardVentePage /> : <Dashboard />;
+      return userRole === "VENTE" ? <Dashboard /> : <Dashboard />;
+
     case "products":
-      return role === "VENTE" ? <ProductsPageVente /> : <ProductsPage />;
+      return userRole === "VENTE" ? <ProductsPageVente /> : <ProductsPage />;
+
     case "customers":
-      return role === "VENTE" ? <CustomersPageVente /> : <CustomersPage />;
+      return userRole === "VENTE" ? <CustomersPageVente /> : <CustomersPage />;
+
+    case "orders":
+      return userRole === "VENTE" ? <OrdersPageVente /> : <OrdersPage />;
+
     case "users":
       return <UsersPage />;
-    case "orders":
-      return role === "VENTE" ? <OrdersPageVente /> : <OrdersPage />;
+
     case "expenses":
       return <ExpensesPage />;
+
     case "stock":
       return <StockPage />;
+
     case "marketing":
       return <MarketingPage />;
+
     case "reports":
       return <ReportsPage />;
+
     case "history":
       return <HistoriquePage />;
+
     default:
-      return role === "VENTE" ? <DashboardVentePage /> : <Dashboard />;
+      return userRole === "VENTE" ? <DashboardVentePage /> : <Dashboard />;
   }
 };
