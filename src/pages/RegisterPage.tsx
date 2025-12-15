@@ -14,36 +14,104 @@ export default function RegisterPage({
   onRegisterSuccess,
   onShowLogin,
 }: RegisterPageProps) {
+  // États du formulaire
   const [nom, setNom] = useState("");
   const [prenom, setPrenom] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [secret, setSecret] = useState("");
+  const [activationKey, setActivationKey] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  // États UI
+  const [step, setStep] = useState<"email" | "form">("email");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [requestingKey, setRequestingKey] = useState(false);
+  const [keySent, setKeySent] = useState(false);
+
+  // États visibilité
   const [showPassword, setShowPassword] = useState(false);
-  const [showSecretKey, setShowSecretKey] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showActivationKey, setShowActivationKey] = useState(false);
+
   const API_KEY = import.meta.env.VITE_API_KEY;
 
+  // Validation du mot de passe
   const isPasswordStrong = (password: string) => {
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
     return regex.test(password);
   };
 
+  // Vérification de l'email
+  const isValidEmail = (email: string) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
+  // Demander une clé d'activation
+  const handleRequestActivationKey = async () => {
+    if (!email || !isValidEmail(email)) {
+      setError("Veuillez entrer une adresse email valide");
+      return;
+    }
+
+    setRequestingKey(true);
+    setError("");
+
+    try {
+      const res = await fetch(
+        `${baseUrl}/api/auth/request-activation-key?email=${encodeURIComponent(
+          email
+        )}`,
+        {
+          method: "POST",
+          headers: {
+            "X-API-KEY": API_KEY,
+          },
+        }
+      );
+
+      if (res.ok) {
+        setKeySent(true);
+        setSuccess(
+          "Clé d'activation envoyée par email. Vérifiez votre boîte de réception."
+        );
+        setTimeout(() => {
+          setStep("form");
+        }, 2000);
+      } else {
+        const data = await res.json();
+        setError(data.error || "Erreur lors de l'envoi de la clé");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Erreur de connexion au serveur");
+    } finally {
+      setRequestingKey(false);
+    }
+  };
+
+  // Soumission du formulaire d'inscription
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
 
-    if (!nom || !prenom || !email || !password || !secret) {
-      setError("Veuillez remplir tous les champs !");
+    // Validation
+    if (!nom || !prenom || !email || !password || !activationKey) {
+      setError("Veuillez remplir tous les champs obligatoires !");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Les mots de passe ne correspondent pas");
       return;
     }
 
     if (!isPasswordStrong(password)) {
       setError(
-        "Mot de passe faible. Minimum 8 caractères, 1 maj, 1 min, 1 chiffre."
+        "Mot de passe faible. Minimum 8 caractères, 1 majuscule, 1 minuscule, 1 chiffre."
       );
       return;
     }
@@ -53,7 +121,7 @@ export default function RegisterPage({
     try {
       const res = await fetch(
         `${baseUrl}/api/auth/register?activationKey=${encodeURIComponent(
-          secret
+          activationKey
         )}`,
         {
           method: "POST",
@@ -71,28 +139,22 @@ export default function RegisterPage({
         }
       );
 
-      // Gestion des erreurs côté serveur
       if (!res.ok) {
-        let message = "Erreur lors de l'inscription";
-        try {
-          const data = await res.json();
-          if (data?.error) message = data.error; // backend envoie {error: "..."}
-          if (data?.message) message = data.message; // ou {message: "..."}
-        } catch {
-          const text = await res.text();
-          if (text) message = text;
-        }
-        setError(message);
+        const data = await res.json();
+        setError(data.error || "Erreur lors de l'inscription");
         return;
       }
 
-      // Si tout est OK
       const data: RegisterResponse = await res.json();
+
+      // Stockage des informations de session
       sessionStorage.setItem("token", data.token);
       sessionStorage.setItem("user", JSON.stringify(data));
 
       setSuccess("Compte créé et connecté avec succès !");
-      setTimeout(() => onRegisterSuccess(), 1000);
+
+      // Redirection après succès
+      setTimeout(() => onRegisterSuccess(), 1500);
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Une erreur inattendue est survenue.");
@@ -101,389 +163,484 @@ export default function RegisterPage({
     }
   };
 
-  // bouton désactivé si un champ est vide
-  const isFormIncomplete = !nom || !prenom || !email || !password || !secret;
+  // Composant d'étape de vérification email
+  const renderEmailStep = () => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="text-xl font-semibold text-slate-800">
+          Vérification de l'email
+        </h2>
+        <p className="text-slate-500 text-sm mt-2">
+          Nous allons vous envoyer une clé d'activation pour créer votre compte
+        </p>
+      </div>
+
+      <div>
+        <label
+          htmlFor="email-step"
+          className="block text-sm font-medium text-slate-700 mb-1"
+        >
+          Adresse email
+        </label>
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg
+              className="h-5 w-5 text-slate-400"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+              <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+            </svg>
+          </div>
+          <input
+            id="email-step"
+            type="email"
+            placeholder="votre@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full pl-10 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
+            disabled={requestingKey || keySent}
+            required
+          />
+        </div>
+      </div>
+
+      {keySent && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <svg
+              className="h-5 w-5 text-green-400 mr-2"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span className="text-green-800 text-sm">
+              Clé envoyée ! Vérifiez votre boîte email.
+            </span>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3">
+        <button
+          type="button"
+          onClick={handleRequestActivationKey}
+          disabled={!email || !isValidEmail(email) || requestingKey || keySent}
+          className={`w-full py-3 px-4 rounded-lg font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors ${
+            !email || !isValidEmail(email) || requestingKey || keySent
+              ? "bg-amber-400 cursor-not-allowed"
+              : "bg-amber-600 hover:bg-amber-700"
+          }`}
+        >
+          {requestingKey ? (
+            <div className="flex items-center justify-center">
+              <svg
+                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Envoi en cours...
+            </div>
+          ) : keySent ? (
+            "Clé envoyée ✓"
+          ) : (
+            "Demander une clé d'activation"
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setStep("form")}
+          className="w-full py-3 px-4 border border-amber-600 text-amber-600 rounded-lg font-medium hover:bg-amber-50 transition-colors"
+        >
+          J'ai déjà une clé d'activation
+        </button>
+
+        <button
+          type="button"
+          onClick={onShowLogin}
+          className="text-sm text-amber-600 hover:text-amber-500 font-medium"
+        >
+          ← Retour à la connexion
+        </button>
+      </div>
+    </div>
+  );
+
+  // Composant d'étape du formulaire
+  const renderFormStep = () => (
+    <form onSubmit={handleRegister} className="space-y-6">
+      <div className="text-center">
+        <h2 className="text-xl font-semibold text-slate-800">
+          Création de compte
+        </h2>
+        <p className="text-slate-500 text-sm mt-1">
+          Remplissez vos informations personnelles
+        </p>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+          <div className="flex items-start">
+            <svg
+              className="h-5 w-5 text-red-400 mt-0.5 mr-2"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+          <div className="flex items-start">
+            <svg
+              className="h-5 w-5 text-green-400 mt-0.5 mr-2"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <p className="text-sm text-green-700">{success}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Prénom
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg
+                className="h-5 w-5 text-slate-400"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Votre prénom"
+              value={prenom}
+              onChange={(e) => setPrenom(e.target.value)}
+              className="w-full pl-10 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Nom
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg
+                className="h-5 w-5 text-slate-400"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Votre nom"
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+              className="w-full pl-10 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
+              required
+            />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1">
+          Email
+        </label>
+        <input
+          type="email"
+          placeholder="votre@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1">
+          Mot de passe
+        </label>
+        <div className="relative">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Créez un mot de passe sécurisé"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full pl-4 pr-10 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-amber-600"
+          >
+            {showPassword ? (
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
+                  clipRule="evenodd"
+                />
+                <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                <path
+                  fillRule="evenodd"
+                  d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            )}
+          </button>
+        </div>
+        <p
+          className={`text-xs mt-1 ${
+            isPasswordStrong(password) ? "text-green-600" : "text-red-600"
+          }`}
+        >
+          {isPasswordStrong(password)
+            ? "✓ Mot de passe sécurisé"
+            : "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre."}
+        </p>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1">
+          Confirmer le mot de passe
+        </label>
+        <div className="relative">
+          <input
+            type={showConfirmPassword ? "text" : "password"}
+            placeholder="Répétez votre mot de passe"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full pl-4 pr-10 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-amber-600"
+          >
+            {showConfirmPassword ? (
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
+                  clipRule="evenodd"
+                />
+                <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                <path
+                  fillRule="evenodd"
+                  d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            )}
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1">
+          Clé d'activation
+        </label>
+        <div className="relative">
+          <input
+            type={showActivationKey ? "text" : "password"}
+            placeholder="Entrez la clé reçue par email"
+            value={activationKey}
+            onChange={(e) => setActivationKey(e.target.value)}
+            className="w-full pl-4 pr-10 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowActivationKey(!showActivationKey)}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-amber-600"
+          >
+            {showActivationKey ? (
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
+                  clipRule="evenodd"
+                />
+                <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                <path
+                  fillRule="evenodd"
+                  d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            )}
+          </button>
+        </div>
+        <div className="flex justify-between items-center mt-1">
+          <p className="text-xs text-slate-500">
+            La clé vous a été envoyée par email
+          </p>
+          <button
+            type="button"
+            onClick={() => setStep("email")}
+            className="text-xs text-amber-600 hover:text-amber-500 font-medium"
+          >
+            Renvoyer la clé
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <button
+          type="submit"
+          disabled={
+            isLoading ||
+            !nom ||
+            !prenom ||
+            !email ||
+            !password ||
+            !activationKey
+          }
+          className={`w-full py-3 px-4 rounded-lg font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors ${
+            isLoading ||
+            !nom ||
+            !prenom ||
+            !email ||
+            !password ||
+            !activationKey
+              ? "bg-amber-400 cursor-not-allowed"
+              : "bg-amber-600 hover:bg-amber-700"
+          }`}
+        >
+          {isLoading ? (
+            <div className="flex items-center justify-center">
+              <svg
+                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Création du compte...
+            </div>
+          ) : (
+            "Créer mon compte"
+          )}
+        </button>
+
+        <div className="text-center text-sm text-slate-600">
+          <p>
+            Déjà inscrit ?{" "}
+            <button
+              type="button"
+              onClick={onShowLogin}
+              className="font-medium text-amber-600 hover:text-amber-500 focus:outline-none focus:underline transition-colors"
+            >
+              Se connecter
+            </button>
+          </p>
+        </div>
+      </div>
+    </form>
+  );
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-0">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl overflow-hidden w-full max-w-md">
         <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-6 text-center">
           <h1 className="text-2xl font-bold text-white">{app_name}</h1>
           <p className="text-amber-100 text-sm mt-1">
-            Création de compte administrateur
+            {step === "email" ? "Première étape" : "Création de compte"}
           </p>
         </div>
 
-        <form onSubmit={handleRegister} className="p-8 flex flex-col gap-6">
-          <div className="text-center mb-2">
-            <h2 className="text-xl font-semibold text-slate-800">
-              Créer un compte
-            </h2>
-            <p className="text-slate-500 text-sm mt-1">
-              Remplissez les informations pour créer votre compte
-            </p>
-          </div>
-
-          {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-              <div className="flex items-start">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-5 w-5 text-red-400"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-red-700">{error}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {success && (
-            <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-              <div className="flex items-start">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-5 w-5 text-green-400"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-green-700">{success}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="prenom"
-                className="block text-sm font-medium text-slate-700 mb-1"
-              >
-                Prénom
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg
-                    className="h-5 w-5 text-slate-400"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <input
-                  id="prenom"
-                  type="text"
-                  placeholder="Votre prénom"
-                  value={prenom}
-                  onChange={(e) => setPrenom(e.target.value)}
-                  className="w-full pl-10 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="nom"
-                className="block text-sm font-medium text-slate-700 mb-1"
-              >
-                Nom
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg
-                    className="h-5 w-5 text-slate-400"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <input
-                  id="nom"
-                  type="text"
-                  placeholder="Votre nom"
-                  value={nom}
-                  onChange={(e) => setNom(e.target.value)}
-                  className="w-full pl-10 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-slate-700 mb-1"
-            >
-              Adresse email
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg
-                  className="h-5 w-5 text-slate-400"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                </svg>
-              </div>
-              <input
-                id="email"
-                type="email"
-                placeholder="votre@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-slate-700 mb-1"
-            >
-              Mot de passe
-            </label>
-            <div className="relative">
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Créez un mot de passe sécurisé"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-gray-100 rounded-full hover:bg-amber-100 transition-colors flex items-center justify-center"
-                >
-                  {showPassword ? (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-amber-600"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M1 1l22 22" />
-                      <path d="M17.94 17.94A10.94 10.94 0 0112 20c-5.33 0-9.64-3.44-11-8a11.06 11.06 0 012.58-4.18M9.88 9.88a3 3 0 014.24 4.24" />
-                      <path d="M14.12 14.12a3 3 0 01-4.24-4.24" />
-                    </svg>
-                  ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-amber-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 4.5c-4.5 0-8.5 4-8.5 7.5s4 7.5 8.5 7.5 8.5-4 8.5-7.5-4-7.5-8.5-7.5z"
-                      />
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="3"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      />
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
-            <p
-              className={`text-xs mt-1 ${
-                isPasswordStrong(password) ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              {isPasswordStrong(password)
-                ? "Mot de passe sécurisé"
-                : "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre."}
-            </p>
-          </div>
-
-          <div>
-            <label
-              htmlFor="secret"
-              className="block text-sm font-medium text-slate-700 mb-1"
-            >
-              Clé d'activation
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg
-                  className="h-5 w-5 text-slate-400"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <input
-                id="secret"
-                type={showSecretKey ? "text" : "password"}
-                placeholder="Mot de passe secret fourni par l'admin"
-                value={secret}
-                onChange={(e) => setSecret(e.target.value)}
-                className="w-full pl-10 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowSecretKey(!showSecretKey)}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-gray-100 rounded-full hover:bg-amber-100 transition-colors flex items-center justify-center"
-              >
-                {showSecretKey ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-amber-600"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M1 1l22 22" />
-                    <path d="M17.94 17.94A10.94 10.94 0 0112 20c-5.33 0-9.64-3.44-11-8a11.06 11.06 0 012.58-4.18M9.88 9.88a3 3 0 014.24 4.24" />
-                    <path d="M14.12 14.12a3 3 0 01-4.24-4.24" />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-amber-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 4.5c-4.5 0-8.5 4-8.5 7.5s4 7.5 8.5 7.5 8.5-4 8.5-7.5-4-7.5-8.5-7.5z"
-                    />
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="3"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                )}
-              </button>
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Cette clé est nécessaire pour créer un compte administrateur
-            </p>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isFormIncomplete || isLoading}
-            className={`w-full py-3 px-4 rounded-lg font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors ${
-              isFormIncomplete || isLoading
-                ? "bg-amber-400 cursor-not-allowed"
-                : "bg-amber-600 hover:bg-amber-700"
-            }`}
-          >
-            {isLoading ? (
-              <div className="flex items-center justify-center">
-                <svg
-                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Création du compte...
-              </div>
-            ) : (
-              "Créer mon compte"
-            )}
-          </button>
-
-          <div className="text-center text-sm text-slate-600">
-            <p>
-              Vous avez déjà un compte?{" "}
-              <button
-                type="button"
-                onClick={onShowLogin}
-                className="font-medium text-amber-600 hover:text-amber-500 focus:outline-none focus:underline transition-colors"
-              >
-                Se connecter
-              </button>
-            </p>
-          </div>
-        </form>
+        <div className="p-8">
+          {step === "email" ? renderEmailStep() : renderFormStep()}
+        </div>
 
         <div className="bg-slate-50 px-8 py-4 border-t border-slate-200">
           <p className="text-xs text-center text-slate-500">
-            © {new Date().getFullYear()} compte {app_name}
+            © {new Date().getFullYear()} {app_name} • Tous droits réservés
           </p>
         </div>
       </div>
