@@ -49,6 +49,24 @@ export default function RegisterPage({
     return regex.test(email);
   };
 
+  const checkEmailExists = async (email: string): Promise<boolean> => {
+    const res = await fetch(
+      `${baseUrl}/api/auth/check-email?email=${encodeURIComponent(email)}`,
+      {
+        headers: {
+          "X-API-KEY": API_KEY,
+        },
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("Impossible de vérifier l'email");
+    }
+
+    const data = await res.json();
+    return data.exists;
+  };
+
   // Demander une clé d'activation
   const handleRequestActivationKey = async () => {
     if (!email || !isValidEmail(email)) {
@@ -56,10 +74,22 @@ export default function RegisterPage({
       return;
     }
 
-    setRequestingKey(true);
     setError("");
+    setSuccess("");
+    setRequestingKey(true);
 
     try {
+      // 🔎 Vérification email existant
+      const exists = await checkEmailExists(email);
+
+      if (exists) {
+        setError(
+          "Un compte avec cette adresse email existe déjà. Veuillez vous connecter."
+        );
+        return;
+      }
+
+      // 📧 Envoi de la clé seulement si email libre
       const res = await fetch(
         `${baseUrl}/api/auth/request-activation-key?email=${encodeURIComponent(
           email
@@ -72,18 +102,18 @@ export default function RegisterPage({
         }
       );
 
-      if (res.ok) {
-        setKeySent(true);
-        setSuccess(
-          "Clé d'activation envoyée par email. Vérifiez votre boîte de réception."
-        );
-        setTimeout(() => {
-          setStep("form");
-        }, 2000);
-      } else {
+      if (!res.ok) {
         const data = await res.json();
         setError(data.error || "Erreur lors de l'envoi de la clé");
+        return;
       }
+
+      setKeySent(true);
+      setSuccess(
+        "Clé d'activation envoyée par email. Vérifiez votre boîte de réception."
+      );
+
+      setTimeout(() => setStep("form"), 2000);
     } catch (err) {
       console.error(err);
       setError("Erreur de connexion au serveur");
@@ -174,6 +204,25 @@ export default function RegisterPage({
           Nous allons vous envoyer une clé d'activation pour créer votre compte
         </p>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+          <div className="flex items-start">
+            <svg
+              className="h-5 w-5 text-red-400 mt-0.5 mr-2"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        </div>
+      )}
 
       <div>
         <label
@@ -410,6 +459,7 @@ export default function RegisterPage({
           onChange={(e) => setEmail(e.target.value)}
           className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
           required
+          readOnly
         />
       </div>
 

@@ -44,8 +44,18 @@ export default function ResetPasswordPage({
 
     setRequestingReset(true);
     setError("");
+    setSuccess("");
 
     try {
+      const exists = await checkEmailExists(email);
+
+      if (!exists) {
+        // Email inconnu → on bloque
+        setError("Aucun compte n'est associé à cet email");
+        setRequestingReset(false);
+        return;
+      }
+
       const res = await fetch(
         `${baseUrl}/api/auth/request-reset-password?email=${encodeURIComponent(
           email
@@ -63,6 +73,7 @@ export default function ResetPasswordPage({
         setSuccess(
           "Code de réinitialisation envoyé par email. Vérifiez votre boîte de réception."
         );
+
         setTimeout(() => {
           setStep("reset");
         }, 2000);
@@ -77,6 +88,26 @@ export default function ResetPasswordPage({
       setRequestingReset(false);
     }
   };
+
+
+  const checkEmailExists = async (email: string): Promise<boolean> => {
+    const res = await fetch(
+      `${baseUrl}/api/auth/check-email?email=${encodeURIComponent(email)}`,
+      {
+        headers: {
+          "X-API-KEY": API_KEY,
+        },
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("Impossible de vérifier l'email");
+    }
+
+    const data = await res.json();
+    return data.exists; // true | false
+  };
+
 
   // Réinitialiser le mot de passe
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -158,6 +189,25 @@ export default function ResetPasswordPage({
           Entrez votre email pour recevoir un code de réinitialisation
         </p>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+          <div className="flex items-start">
+            <svg
+              className="h-5 w-5 text-red-400 mt-0.5 mr-2"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        </div>
+      )}
 
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -332,6 +382,7 @@ export default function ResetPasswordPage({
           onChange={(e) => setEmail(e.target.value)}
           className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
           required
+          readOnly
         />
       </div>
 
