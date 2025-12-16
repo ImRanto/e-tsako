@@ -63,6 +63,7 @@ export default function ResetPasswordPage({
         {
           method: "POST",
           headers: {
+            "Content-Type": "application/json",
             "X-API-KEY": API_KEY,
           },
         }
@@ -95,6 +96,7 @@ export default function ResetPasswordPage({
       `${baseUrl}/api/auth/check-email?email=${encodeURIComponent(email)}`,
       {
         headers: {
+          "Content-Type": "application/json",
           "X-API-KEY": API_KEY,
         },
       }

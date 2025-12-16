@@ -54,6 +54,7 @@ export default function RegisterPage({
       `${baseUrl}/api/auth/check-email?email=${encodeURIComponent(email)}`,
       {
         headers: {
+          "Content-Type": "application/json",
           "X-API-KEY": API_KEY,
         },
       }
@@ -97,6 +98,7 @@ export default function RegisterPage({
         {
           method: "POST",
           headers: {
+            "Content-Type": "application/json",
             "X-API-KEY": API_KEY,
           },
         }
