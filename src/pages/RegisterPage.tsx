@@ -53,19 +53,21 @@ export default function RegisterPage({
     const res = await fetch(
       `${baseUrl}/api/auth/check-email?email=${encodeURIComponent(email)}`,
       {
+        method: "GET",
         headers: {
-          "Content-Type": "application/json",
           "X-API-KEY": API_KEY,
         },
       }
     );
 
     if (!res.ok) {
-      throw new Error("Impossible de vérifier l'email");
+      console.error("check-email failed:", res.status);
+      throw new Error("check-email failed");
     }
 
     const data = await res.json();
-    return data.exists;
+
+    return Boolean(data.exists);
   };
 
   // Demander une clé d'activation

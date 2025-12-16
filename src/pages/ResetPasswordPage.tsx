@@ -90,26 +90,26 @@ export default function ResetPasswordPage({
     }
   };
 
-
-  const checkEmailExists = async (email: string): Promise<boolean> => {
-    const res = await fetch(
-      `${baseUrl}/api/auth/check-email?email=${encodeURIComponent(email)}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-KEY": API_KEY,
-        },
-      }
-    );
-
-    if (!res.ok) {
-      throw new Error("Impossible de vérifier l'email");
+const checkEmailExists = async (email: string): Promise<boolean> => {
+  const res = await fetch(
+    `${baseUrl}/api/auth/check-email?email=${encodeURIComponent(email)}`,
+    {
+      method: "GET",
+      headers: {
+        "X-API-KEY": API_KEY,
+      },
     }
+  );
 
-    const data = await res.json();
-    return data.exists; // true | false
-  };
+  if (!res.ok) {
+    console.error("check-email failed:", res.status);
+    throw new Error("check-email failed");
+  }
 
+  const data = await res.json();
+
+  return Boolean(data.exists);
+};
 
   // Réinitialiser le mot de passe
   const handleResetPassword = async (e: React.FormEvent) => {
