@@ -396,8 +396,8 @@ export default function UsersPage() {
                   <option value="all">Tous les rôles</option>
                   <option value="ADMIN">Administrateur</option>
                   <option value="PRODUCTION">Production</option>
-                  <option value="SELLER">Vente</option>
-                  <option value="BUYER">Vente</option>
+                  <option value="SELLER">Vendeur</option>
+                  <option value="BUYER">Client</option>
                   <option value="MARKETING">Marketing</option>
                 </select>
                 <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -734,8 +734,8 @@ export default function UsersPage() {
                   >
                     <option value="ADMIN">Administrateur</option>
                     <option value="PRODUCTION">Production</option>
-                    <option value="SELLER">Vente</option>
-                    <option value="BUYER">Vente</option>
+                    <option value="SELLER">Vendeur</option>
+                    <option value="BUYER">Client</option>
                     <option value="MARKETING">Marketing</option>
                   </select>
                 </div>
