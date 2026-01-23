@@ -63,7 +63,7 @@ export default function DashboardVentePage() {
           totalVentes: statsData.totalCommandes,
           clientsActifs: statsData.clientsActifs,
           chiffreAffaires: statsData.chiffreAffaires,
-          produitsVendus: 0, // À adapter selon votre API
+          produitsVendus: 0,
         });
 
         setRecentOrders(ordersData);

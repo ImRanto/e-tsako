@@ -1,11 +1,11 @@
 import { useEffect } from "react";
-import ContactSection from "../components/Contact";
-import Features from "../components/Features";
-import Footer from "../components/Footer";
-import Header from "../components/Header";
-import Hero from "../components/Hero";
-import Stats from "../components/Stats";
-import Testimonials from "../components/Testimonials";
+import ContactSection from "../components/landingPage/Contact";
+import Features from "../components/landingPage/Features";
+import Footer from "../components/landingPage/Footer";
+import Header from "../components/landingPage/Header";
+import Hero from "../components/landingPage/Hero";
+import Stats from "../components/landingPage/Stats";
+import Testimonials from "../components/landingPage/Testimonials";
 
 const API_KEY = import.meta.env.VITE_API_KEY;
 const baseUrl = import.meta.env.VITE_API_URL;
@@ -25,9 +25,9 @@ export default function LandingPage() {
     };
 
     pingBackend();
-    const interval = setInterval(pingBackend, 13 * 60 * 1000); // toutes les 13 min
+    const interval = setInterval(pingBackend, 0.5 * 60 * 1000); // toutes les 13 min
     return () => clearInterval(interval);
-  }, [baseUrl]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">

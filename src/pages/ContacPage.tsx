@@ -42,7 +42,6 @@ export default function ContactPage() {
     // Simulation d'envoi de formulaire
     try {
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      // Ici vous intégreriez votre logique d'envoi de formulaire
       setSubmitStatus("success");
       setFormData({ name: "", email: "", subject: "", message: "" });
     } catch (error) {
@@ -61,7 +60,6 @@ export default function ContactPage() {
     const updateVisibility = () => {
       const currentScrollY = window.scrollY;
 
-      // Cacher le bouton quand on scroll vers le bas, le montrer quand on scroll vers le haut
       if (currentScrollY > lastScrollY) {
         setIsButtonVisible(false);
       } else {

@@ -10,9 +10,9 @@ import {
   TrendingUp,
   BarChart3,
 } from "lucide-react";
-import Modal from "../components/Modal";
-import StockForm, { StockData } from "../components/StockForm";
-import Loader from "../components/Loader";
+import Modal from "../components/form/Modal";
+import StockForm, { StockData } from "../components/form/StockForm";
+import Loader from "../components/loading/Loader";
 
 const baseUrl = import.meta.env.VITE_API_URL;
 

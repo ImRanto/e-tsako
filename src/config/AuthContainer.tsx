@@ -1,4 +1,3 @@
-// src/components/AuthContainer.tsx
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import ResetPasswordPage from "../pages/ResetPasswordPage";

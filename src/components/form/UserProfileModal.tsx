@@ -30,7 +30,6 @@ export function UserProfileModal({
 
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Gestion du drag & drop
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [modalStartPosition, setModalStartPosition] = useState({
@@ -38,7 +37,6 @@ export function UserProfileModal({
     left: 0,
   });
 
-  // Centrage initial de la modale
   useEffect(() => {
     if (isOpen) {
       const centerX = window.innerWidth / 2 - 160;
@@ -47,7 +45,6 @@ export function UserProfileModal({
     }
   }, [isOpen]);
 
-  // Gestion du drag
   const startDrag = (clientX: number, clientY: number) => {
     setIsDragging(true);
     setDragStart({ x: clientX, y: clientY });
@@ -68,7 +65,6 @@ export function UserProfileModal({
 
   const endDrag = () => setIsDragging(false);
 
-  // Événements souris
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     startDrag(e.clientX, e.clientY);
@@ -89,7 +85,6 @@ export function UserProfileModal({
     };
   }, [isDragging]);
 
-  // Événements tactiles
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
     startDrag(touch.clientX, touch.clientY);
@@ -100,7 +95,6 @@ export function UserProfileModal({
     duringDrag(touch.clientX, touch.clientY);
   };
 
-  // Récupération des données utilisateur
   useEffect(() => {
     if (!isOpen) return;
 
@@ -133,7 +127,6 @@ export function UserProfileModal({
     fetchUserProfile();
   }, [isOpen]);
 
-  // Fermeture en cliquant à l'extérieur
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {

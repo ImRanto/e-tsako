@@ -9,7 +9,7 @@ import {
   MapPin,
   Users,
 } from "lucide-react";
-import Loader from "../components/Loader";
+import Loader from "../components/loading/Loader";
 import { Customer } from "../components/types/customerType";
 
 const baseUrl = import.meta.env.VITE_API_URL;
@@ -20,7 +20,6 @@ export default function VentePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("TOUS");
 
-  // Charger depuis backend
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     if (!token) return;
@@ -38,7 +37,6 @@ export default function VentePage() {
       .finally(() => setIsLoading(false));
   }, []);
 
-  // Filtrer par recherche et type
   const filtered = customers.filter(
     (c) =>
       (c.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||

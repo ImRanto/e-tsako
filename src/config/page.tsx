@@ -1,4 +1,4 @@
-import Dashboard from "../components/Dashboard";
+import Dashboard from "../components/dasboard/Dashboard";
 import ProductsPage from "../pages/ProductsPage";
 import ProductsPageVente from "../pages/ProductPageVente";
 import CustomersPage from "../pages/CustomersPage";

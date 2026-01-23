@@ -29,7 +29,6 @@ export default function StockForm({
   const baseUrl = import.meta.env.VITE_API_URL;
   const token = sessionStorage.getItem("token");
 
-  // Options prédéfinies pour les unités
   const uniteOptions = ["KG", "LITRE", "UNITE"];
 
   useEffect(() => {
@@ -50,7 +49,6 @@ export default function StockForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation améliorée
     if (!nomMatiere.trim()) {
       setError("Veuillez saisir un nom de matière !");
       return;
@@ -106,7 +104,7 @@ export default function StockForm({
         throw new Error(text || "Erreur lors de la sauvegarde du stock");
       }
 
-      onSaved?.(); // callback pour fermer le modal et rafraîchir la liste
+      onSaved?.();
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Erreur inconnue");

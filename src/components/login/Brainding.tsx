@@ -1,4 +1,3 @@
-// src/components/Branding.tsx
 interface BrandingProps {
   app_name: string;
 }

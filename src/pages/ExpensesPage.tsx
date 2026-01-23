@@ -22,8 +22,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import Modal from "../components/Modal";
-import ExpenseForm from "../components/ExpensesForm";
+import Modal from "../components/form/Modal";
+import ExpenseForm from "../components/form/ExpensesForm";
 import { exportToCSV, exportToPDF } from "../utils/exportUtils";
 import ExpenseCharts from "../components/chart/ExpenseChart";
 import { jwtDecode } from "jwt-decode";
@@ -89,12 +89,6 @@ interface ApiResponse {
   empty: boolean;
 }
 
-// Dans votre composant Modal (si ce n'est pas déjà fait)
-interface ModalProps {
-  // ... autres props
-  size?: 'sm' | 'md' | 'lg' | 'xl';
-}
-
 const baseUrl = import.meta.env.VITE_API_URL;
 
 export default function ExpensesPage() {
@@ -131,7 +125,6 @@ export default function ExpensesPage() {
 
   const itemsPerPageOptions = [5, 10, 25, 50];
 
-  // Fetch des dépenses avec pagination
   const fetchExpenses = async () => {
     const token = sessionStorage.getItem("token");
     if (!token) {
@@ -144,22 +137,18 @@ export default function ExpensesPage() {
     setError(null);
 
     try {
-      // Décoder le token pour récupérer le rôle
       const decoded: DecodedToken = jwtDecode(token);
 
-      // Construire les paramètres de requête
       const params = new URLSearchParams({
         page: currentPage.toString(),
         size: itemsPerPage.toString(),
       });
 
-      // Ajouter les filtres s'ils sont définis
       if (searchTerm) params.append("search", searchTerm);
       if (typeFilter) params.append("type", typeFilter);
       if (dateRange.start) params.append("startDate", dateRange.start);
       if (dateRange.end) params.append("endDate", dateRange.end);
 
-      // Choix de l'endpoint selon le rôle
       const endpoint =
         decoded.role === "ADMIN"
           ? `${baseUrl}/api/depenses/paged?${params}`
@@ -231,7 +220,6 @@ const fetchExpenseDetail = async (id: number) => {
     fetchExpenses();
   }, [currentPage, itemsPerPage, searchTerm, typeFilter, dateRange]);
 
-  // CRUD
   const handleSave = async (expenseData: Omit<Expense, "id">) => {
     const token = sessionStorage.getItem("token");
     if (!token) {
@@ -241,7 +229,6 @@ const fetchExpenseDetail = async (id: number) => {
 
     try {
       if (editingExpense) {
-        // Update via PUT
         await fetch(`${baseUrl}/api/depenses/${editingExpense.id}`, {
           method: "PUT",
           headers: {
@@ -251,7 +238,6 @@ const fetchExpenseDetail = async (id: number) => {
           body: JSON.stringify(expenseData),
         });
       } else {
-        // Create via POST
         await fetch(`${baseUrl}/api/depenses`, {
           method: "POST",
           headers: {
@@ -325,7 +311,6 @@ const fetchExpenseDetail = async (id: number) => {
     }
   };
 
-  // Couleur et label pour chaque type de dépense
   const getTypeColor = (type: string) => {
     switch (type) {
       case "MATIERE_PREMIERE":
@@ -356,7 +341,6 @@ const fetchExpenseDetail = async (id: number) => {
     }
   };
 
-  // Tri des données
   const handleSort = (key: string) => {
     let direction: "ascending" | "descending" = "ascending";
     if (
@@ -369,7 +353,6 @@ const fetchExpenseDetail = async (id: number) => {
     setSortConfig({ key, direction });
   };
 
-  // Filtrage et total
   const filteredExpenses = expenses.filter((expense) => {
     const matchesSearch =
       expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -378,7 +361,6 @@ const fetchExpenseDetail = async (id: number) => {
         .includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === "" || expense.typeDepense === typeFilter;
 
-    // Filtre par date
     const expenseDate = new Date(expense.dateDepense);
     const matchesStartDate =
       !dateRange.start || expenseDate >= new Date(dateRange.start);
@@ -390,13 +372,11 @@ const fetchExpenseDetail = async (id: number) => {
     return matchesSearch && matchesType && matchesStartDate && matchesEndDate;
   });
 
-  // Total des dépenses
   const totalExpenses = filteredExpenses.reduce(
     (sum, expense) => sum + expense.montant,
     0
   );
 
-  // Statistiques par type
   const expensesByType = filteredExpenses.reduce((acc, expense) => {
     const type = expense.typeDepense;
     if (!acc[type]) {
@@ -424,7 +404,6 @@ const fetchExpenseDetail = async (id: number) => {
     });
   }
 
-  // Pagination
   const totalPages = paginationInfo.totalPages;
   const currentPageIndex = paginationInfo.number;
 
@@ -435,7 +414,6 @@ const fetchExpenseDetail = async (id: number) => {
     }
   };
 
-  // Gestion de la sélection
   const toggleSelectAll = () => {
     if (selectedExpenses.length === expenses.length) {
       setSelectedExpenses([]);
@@ -454,7 +432,6 @@ const fetchExpenseDetail = async (id: number) => {
     }
   };
 
-  // Exportation
   const handleExport = (format: "csv" | "pdf") => {
     const dataToExport = filteredExpenses.map((expense) => ({
       Date: new Date(expense.dateDepense).toLocaleDateString("fr-FR"),
@@ -476,7 +453,6 @@ const fetchExpenseDetail = async (id: number) => {
     }
   };
 
-  // Modal et actions CRUD
   const openCreateModal = () => {
     setEditingExpense(null);
     setIsModalOpen(true);
@@ -487,7 +463,6 @@ const fetchExpenseDetail = async (id: number) => {
     setIsModalOpen(true);
   };
 
-  // Icône de tri
   const SortIcon = ({ columnKey }: { columnKey: string }) => {
     if (!sortConfig || sortConfig.key !== columnKey) {
       return <ChevronDown size={14} className="opacity-50" />;
@@ -544,7 +519,6 @@ const fetchExpenseDetail = async (id: number) => {
     </div>
   );
 
-  // Pagination controls component
   const PaginationControls = () => {
     if (totalPages <= 1) return null;
 
@@ -557,39 +531,30 @@ const fetchExpenseDetail = async (id: number) => {
           pages.push(i);
         }
       } else {
-        // Always include first page
         pages.push(0);
 
-        // Calculate start and end of visible pages
         let start = Math.max(
           1,
           currentPageIndex - Math.floor(maxVisiblePages / 2)
         );
         let end = Math.min(totalPages - 1, start + maxVisiblePages - 1);
 
-        // Adjust if we're near the end
         if (end === totalPages - 1) {
           start = totalPages - maxVisiblePages;
         }
 
-        // Add ellipsis if needed
         if (start > 1) {
-          pages.push(-1); // -1 represents ellipsis
         }
 
-        // Add middle pages
         for (let i = start; i < end; i++) {
           if (i > 0 && i < totalPages - 1) {
             pages.push(i);
           }
         }
 
-        // Add ellipsis if needed
         if (end < totalPages - 1) {
-          pages.push(-2); // -2 represents ellipsis
         }
 
-        // Always include last page
         pages.push(totalPages - 1);
       }
 

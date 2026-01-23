@@ -48,7 +48,6 @@ export default function ExpenseForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation améliorée
     if (!montant || montant <= 0) {
       setError("Veuillez saisir un montant valide !");
       return;

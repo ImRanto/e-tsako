@@ -47,7 +47,7 @@ export default function CustomerForm({
   const baseUrl = import.meta.env.VITE_API_URL;
   const token = sessionStorage.getItem("token");
 
-  // Pré-remplir si édition
+  // Pré-rempli
   useEffect(() => {
     if (customer) {
       setNom(customer.nom || "");

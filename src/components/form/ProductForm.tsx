@@ -43,11 +43,9 @@ export default function ProductForm({
       setPrixUnitaire(product.prixUnitaire);
       setStockDisponible(product.stockDisponible);
 
-      // Réinitialiser les états d'image
       setImage(null);
       setImagePreview(null);
 
-      // Si le produit a déjà une image, créer l'URL de prévisualisation
       if (product.imageData && product.imageType) {
         const imageUrl = `data:${product.imageType};base64,${product.imageData}`;
         setImagePreview(imageUrl);
@@ -66,7 +64,6 @@ export default function ProductForm({
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validation du type de fichier
       if (!file.type.startsWith("image/")) {
         setError("Veuillez sélectionner un fichier image valide !");
         return;
@@ -81,7 +78,6 @@ export default function ProductForm({
       setImage(file);
       setError("");
 
-      // Créer l'URL de prévisualisation
       const previewUrl = URL.createObjectURL(file);
       setImagePreview(previewUrl);
     }
@@ -91,7 +87,6 @@ export default function ProductForm({
     setImage(null);
     setImagePreview(null);
 
-    // Réinitialiser l'input file
     const fileInput = document.querySelector(
       'input[type="file"]'
     ) as HTMLInputElement;
@@ -103,7 +98,6 @@ export default function ProductForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation améliorée
     if (!nom.trim()) {
       setError("Veuillez saisir un nom de produit !");
       return;
@@ -134,7 +128,6 @@ export default function ProductForm({
       formData.append("prixUnitaire", prixUnitaire as any);
       formData.append("stockDisponible", stockDisponible as any);
 
-      // CORRECTION : Bien vérifier l'image
       if (image) {
         // console.log("Image à envoyer:", image.name, image.type, image.size);
         formData.append("image", image);
@@ -158,7 +151,6 @@ export default function ProductForm({
         method,
         headers: {
           Authorization: `Bearer ${token}`,
-          // NE PAS mettre Content-Type pour FormData
         },
         body: formData,
       });
@@ -183,7 +175,6 @@ export default function ProductForm({
       const saved: Product = await res.json();
       // console.log("Produit sauvegardé:", saved);
 
-      // Nettoyer les URLs de prévisualisation
       if (imagePreview && imagePreview.startsWith("blob:")) {
         URL.revokeObjectURL(imagePreview);
       }
@@ -200,7 +191,6 @@ export default function ProductForm({
     }
   };
 
-  // Nettoyer les URLs de prévisualisation lors du démontage
   useEffect(() => {
     return () => {
       if (imagePreview && imagePreview.startsWith("blob:")) {

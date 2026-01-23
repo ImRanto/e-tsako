@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { menuByRole } from "../utils/menus";
+import { menuByRole } from "../../utils/menus";
 import {
   Package,
   Menu,
@@ -12,8 +12,8 @@ import {
   Building,
   Truck,
 } from "lucide-react";
-import { UserProfileModal } from "./UserProfileModal";
-import { useAuth } from "../context/AuthProvider";
+import { UserProfileModal } from "../form/UserProfileModal";
+import { useAuth } from "../../context/AuthProvider";
 import { useNavigate } from "react-router-dom";
 
 interface SidebarProps {
@@ -31,7 +31,6 @@ interface User {
 const app_name = import.meta.env.VITE_APP_NAME || "I-TSAKY";
 const baseUrl = import.meta.env.VITE_API_URL;
 
-// Icônes pour les différents rôles
 const roleIcons = {
   ADMIN: <Settings size={14} className="text-purple-600" />,
   VENTE: <User size={14} className="text-blue-600" />,
@@ -39,7 +38,6 @@ const roleIcons = {
   MARKETING: <Truck size={14} className="text-orange-600" />,
 };
 
-// Couleurs pour les différents rôles
 const roleColors = {
   ADMIN: "bg-purple-100 text-purple-800",
   VENTE: "bg-blue-100 text-blue-800",
@@ -54,13 +52,11 @@ export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const navigate = useNavigate();
 
-  // Utilisation du contexte d'authentification
   const { user, logout } = useAuth();
 
   const role = user?.role || "VENTE";
   const menuItems = menuByRole[role] || [];
 
-  // Synchronisation avec l'API pour les données utilisateur fraîches
   useEffect(() => {
     const fetchUser = async () => {
       const token = sessionStorage.getItem("token");
@@ -77,7 +73,6 @@ export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {
         if (res.ok) {
           const data: User = await res.json();
           sessionStorage.setItem("user", JSON.stringify(data));
-          // Déclencher une mise à jour du contexte
           window.dispatchEvent(new Event("authStateChange"));
         }
       } catch (err) {
@@ -88,7 +83,6 @@ export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {
     fetchUser();
   }, []);
 
-  // Fermer le dropdown quand on clique ailleurs
   useEffect(() => {
     const handleClickOutside = () => {
       if (dropdownOpen) {
@@ -101,7 +95,7 @@ export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {
   }, [dropdownOpen]);
 
   const handleLogout = () => {
-    logout(); // Utilise la fonction du contexte qui synchronisera automatiquement
+    logout();
     setDropdownOpen(false);
     setIsOpen(false);
 

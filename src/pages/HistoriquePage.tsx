@@ -12,7 +12,7 @@ import {
   ChevronUp,
   AlertCircle,
 } from "lucide-react";
-import Loader from "../components/Loader";
+import Loader from "../components/loading/Loader";
 
 interface Historique {
   id: number;
@@ -68,8 +68,8 @@ export default function HistoriquePage() {
 
       setHistoriques(data.content || []);
       setFilteredHistoriques(data.content || []);
-      setPage(data.number); // page actuelle
-      setTotalPages(data.totalPages); // nb total de pages
+      setPage(data.number);
+      setTotalPages(data.totalPages);
     } catch (err: any) {
       setError(err.message || "Erreur inconnue");
     } finally {
@@ -81,11 +81,9 @@ export default function HistoriquePage() {
     fetchData();
   }, []);
 
-  // Filtrer et trier les données
   useEffect(() => {
     let result = historiques;
 
-    // Appliquer le filtre de recherche
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(
@@ -98,12 +96,9 @@ export default function HistoriquePage() {
       );
     }
 
-    // Appliquer le filtre de méthode
     if (methodFilter !== "all") {
       result = result.filter((h) => h.methode === methodFilter);
     }
-
-    // Appliquer le tri
     result = [...result].sort((a, b) => {
       if (sortConfig.key === "dateAction") {
         return sortConfig.direction === "asc"

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Calendar, TrendingUp, Download, BarChart3 } from "lucide-react";
-import Loader from "../components/Loader";
+import Loader from "../components/loading/Loader";
 
 interface SalesData {
   revenue: number;

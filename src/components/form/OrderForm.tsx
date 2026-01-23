@@ -13,7 +13,7 @@ import {
   ShoppingCart,
   Clock,
 } from "lucide-react";
-import { Client, Produit } from "./types/orderTypes";
+import { Client, Produit } from "../types/orderTypes";
 
 interface DetailCommande {
   produit: Produit;
@@ -300,9 +300,8 @@ export default function OrderForm({
 
   const total = details.reduce((sum, d) => sum + d.prixTotal, 0);
   const StatusIcon = getStatusConfig(statut).icon;
-  const isEditing = !!order; // true si on modifie, false si nouvelle commande
-  // Déterminer si on peut modifier les détails (articles + quantités)
-  const canEditDetails = !order || order.statut === "EN_ATTENTE"; // Création ou édition en attente
+  const isEditing = !!order;
+  const canEditDetails = !order || order.statut === "EN_ATTENTE"; 
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">

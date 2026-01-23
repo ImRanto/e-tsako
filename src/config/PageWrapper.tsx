@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import Loader from "./Loader";
-import ScrollToTop from "./ScrollToTop";
+import Loader from "../components/loading/Loader";
+import ScrollToTop from "../components/loading/ScrollToTop";
 
 interface PageWrapperProps {
   children: React.ReactNode;

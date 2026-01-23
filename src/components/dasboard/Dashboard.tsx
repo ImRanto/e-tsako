@@ -8,8 +8,8 @@ import {
 } from "lucide-react";
 import StatCard from "./StatCard";
 import QuickActions from "./QuickActions";
-import OrderModal from "./OrderModalList";
-import Loader from "./Loader";
+import OrderModal from "../form/OrderModalList";
+import Loader from "../loading/Loader";
 
 export interface Stock {
   id: number;
@@ -87,7 +87,6 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
-  // 🔹 pagination states
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
@@ -107,7 +106,6 @@ export default function Dashboard() {
       // console.log("Response status:", res.status);
 
       if (!res.ok) {
-        // Essayer de récupérer le message d'erreur du backend
         let errorMessage = `Erreur ${res.status}: ${res.statusText}`;
 
         try {
@@ -118,7 +116,6 @@ export default function Dashboard() {
             errorMessage = errorData.error;
           }
         } catch {
-          // Si le JSON n'est pas parsable, essayer avec text()
           try {
             const errorText = await res.text();
             if (errorText) {
@@ -135,17 +132,14 @@ export default function Dashboard() {
       const data = await res.json();
       // console.log("Data received:", data);
       setter(data);
-      return data; // Retourner les données pour un usage éventuel
+      return data;
     } catch (err: any) {
       console.error("Fetch error for URL:", url, err);
 
-      // Message d'erreur plus spécifique
       let errorMsg = err.message || "Erreur lors du chargement des données";
 
-      // Gestion des erreurs spécifiques
       if (err.message.includes("401") || err.message.includes("Unauthorized")) {
         errorMsg = "Session expirée. Veuillez vous reconnecter.";
-        // Optionnel : rediriger vers la page de login
         // window.location.href = "/login";
       } else if (
         err.message.includes("403") ||
@@ -165,7 +159,7 @@ export default function Dashboard() {
       }
 
       setError(errorMsg);
-      throw err; // Relancer l'erreur pour Promise.all
+      throw err;
     }
   };
 
@@ -180,7 +174,6 @@ export default function Dashboard() {
       );
     } catch (err) {
       console.error("Error fetching orders:", err);
-      // L'erreur est déjà gérée dans fetchWithAuth
     }
   };
 
@@ -196,7 +189,6 @@ export default function Dashboard() {
       setError("");
 
       try {
-        // Utiliser Promise.allSettled pour éviter qu'une erreur bloque les autres requêtes
         const results = await Promise.allSettled([
           fetchWithAuth<Stats>(`${baseUrl}/api/commandes/stats`, setStats),
           fetchOrders(page),
@@ -206,7 +198,6 @@ export default function Dashboard() {
           ),
         ]);
 
-        // Vérifier s'il y a des erreurs
         const errors = results.filter(
           (result) => result.status === "rejected"
         ) as PromiseRejectedResult[];
@@ -214,7 +205,6 @@ export default function Dashboard() {
         if (errors.length > 0) {
           console.warn(`${errors.length} requêtes ont échoué:`, errors);
 
-          // Si toutes les requêtes ont échoué, afficher une erreur générale
           if (errors.length === results.length) {
             setError("Impossible de charger les données du dashboard");
           }
@@ -323,7 +313,6 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Reste du code inchangé */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border overflow-hidden">
           <div className="p-6 border-b bg-gray-50">

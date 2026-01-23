@@ -29,7 +29,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    // Synchroniser au chargement initial
     syncAuthState();
 
     // Écouter les changements de sessionStorage entre les onglets
@@ -39,10 +38,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    // Écouter les événements de storage (entre onglets)
     window.addEventListener("storage", handleStorageChange);
 
-    // Écouter les événements personnalisés (même onglet)
     const handleAuthChange = () => {
       syncAuthState();
     };
@@ -59,7 +56,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     sessionStorage.setItem("user", JSON.stringify(userData));
     sessionStorage.setItem("token", token);
     setUser(userData);
-    // Déclencher l'événement pour synchroniser tous les composants
     window.dispatchEvent(new Event("authStateChange"));
   };
 
@@ -67,7 +63,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     sessionStorage.removeItem("user");
     sessionStorage.removeItem("token");
     setUser(null);
-    // Déclencher l'événement pour synchroniser tous les composants
     window.dispatchEvent(new Event("authStateChange"));
   };
 

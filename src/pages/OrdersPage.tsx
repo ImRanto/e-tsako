@@ -13,10 +13,10 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import OrderForm from "../components/OrderForm";
-import Modal from "../components/Modal";
+import OrderForm from "../components/form/OrderForm";
+import Modal from "../components/form/Modal";
 import { jwtDecode } from "jwt-decode";
-import Loader from "../components/Loader";
+import Loader from "../components/loading/Loader";
 import { DecodedToken } from "../utils/auth";
 import { ApiResponse, Commande } from "../components/types/orderTypes";
 

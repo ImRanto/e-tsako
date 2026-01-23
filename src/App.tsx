@@ -1,11 +1,11 @@
 // App.tsx
 import { useEffect, useState } from "react";
-import Sidebar from "./components/Sidebar";
-import Loader from "./components/Loader";
+import Sidebar from "./components/dasboard/Sidebar";
+import Loader from "./components/loading/Loader";
 import { getUserFromToken, DecodedToken } from "./utils/auth";
 import AdminLoginPage from "./pages/AdminLoginPage";
-import Branding from "./components/Brainding";
-import AuthContainer from "./components/AuthContainer";
+import Branding from "./components/login/Brainding";
+import AuthContainer from "./config/AuthContainer";
 import { renderPage } from "./config/page";
 
 function App() {

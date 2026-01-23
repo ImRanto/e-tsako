@@ -10,8 +10,8 @@ import {
   Filter,
   MoreVertical,
 } from "lucide-react";
-import Modal from "../components/Modal";
-import CustomerForm from "../components/CustomerForm";
+import Modal from "../components/form/Modal";
+import CustomerForm from "../components/form/CustomerForm";
 import { Customer } from "../components/types/customerType";
 
 const baseUrl = import.meta.env.VITE_API_URL;
@@ -26,7 +26,6 @@ export default function CustomersPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState<number | null>(null);
   const [error, setError] = useState("");
 
-  // Charger depuis backend avec gestion d'erreur améliorée
   useEffect(() => {
     const fetchCustomers = async () => {
       const token = sessionStorage.getItem("token");
@@ -50,7 +49,7 @@ export default function CustomersPage() {
         if (!res.ok) {
           const errorText = await res.text();
           throw new Error(
-            `Erreur ${res.status}: ${errorText || "Échec du chargement"}`
+            `Erreur ${res.status}: ${errorText || "Échec du chargement"}`,
           );
         }
 
@@ -67,7 +66,6 @@ export default function CustomersPage() {
     fetchCustomers();
   }, []);
 
-  // Ajouter / Modifier avec gestion d'erreur
   const handleSave = async (customerData: Omit<Customer, "id">) => {
     const token = sessionStorage.getItem("token");
     if (!token) {
@@ -77,7 +75,6 @@ export default function CustomersPage() {
 
     try {
       if (editingCustomer) {
-        // UPDATE
         const res = await fetch(
           `${baseUrl}/api/clients/${editingCustomer.id}`,
           {
@@ -87,22 +84,21 @@ export default function CustomersPage() {
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify(customerData),
-          }
+          },
         );
 
         if (!res.ok) {
           const errorText = await res.text();
           throw new Error(
-            `Erreur ${res.status}: ${errorText || "Échec de la modification"}`
+            `Erreur ${res.status}: ${errorText || "Échec de la modification"}`,
           );
         }
 
         const updated: Customer = await res.json();
         setCustomers(
-          customers.map((c) => (c.id === editingCustomer.id ? updated : c))
+          customers.map((c) => (c.id === editingCustomer.id ? updated : c)),
         );
       } else {
-        // CREATE
         const res = await fetch(`${baseUrl}/api/clients`, {
           method: "POST",
           headers: {
@@ -115,7 +111,7 @@ export default function CustomersPage() {
         if (!res.ok) {
           const errorText = await res.text();
           throw new Error(
-            `Erreur ${res.status}: ${errorText || "Échec de la création"}`
+            `Erreur ${res.status}: ${errorText || "Échec de la création"}`,
           );
         }
 
@@ -125,14 +121,13 @@ export default function CustomersPage() {
 
       setIsModalOpen(false);
       setEditingCustomer(null);
-      setError(""); // Clear error on success
+      setError("");
     } catch (error: any) {
       console.error("Erreur sauvegarde client:", error);
       setError(error.message || "Erreur lors de la sauvegarde");
     }
   };
 
-  // Supprimer avec gestion d'erreur
   const handleDelete = async (id: number) => {
     const token = sessionStorage.getItem("token");
     if (!token) {
@@ -152,12 +147,12 @@ export default function CustomersPage() {
         if (!res.ok) {
           const errorText = await res.text();
           throw new Error(
-            `Erreur ${res.status}: ${errorText || "Échec de la suppression"}`
+            `Erreur ${res.status}: ${errorText || "Échec de la suppression"}`,
           );
         }
 
         setCustomers(customers.filter((c) => c.id !== id));
-        setError(""); // Clear error on success
+        setError("");
       } catch (error: any) {
         console.error("Erreur suppression client:", error);
         setError(error.message || "Erreur lors de la suppression");
@@ -165,7 +160,6 @@ export default function CustomersPage() {
     }
   };
 
-  // Filtrer recherche et type
   const filteredCustomers = customers.filter((customer) => {
     const matchesSearch =
       customer.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -355,7 +349,7 @@ export default function CustomersPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getCustomerColor(
-                            customer.typeClient
+                            customer.typeClient,
                           )}`}
                         >
                           {customer.typeClient}
@@ -421,7 +415,7 @@ export default function CustomersPage() {
                         </h3>
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getCustomerColor(
-                            customer.typeClient
+                            customer.typeClient,
                           )}`}
                         >
                           {customer.typeClient}
@@ -450,7 +444,7 @@ export default function CustomersPage() {
                     <button
                       onClick={() =>
                         setMobileMenuOpen(
-                          mobileMenuOpen === customer.id ? null : customer.id
+                          mobileMenuOpen === customer.id ? null : customer.id,
                         )
                       }
                       className="p-2 text-gray-400 hover:text-gray-600 rounded-lg"

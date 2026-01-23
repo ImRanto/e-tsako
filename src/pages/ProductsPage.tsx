@@ -10,9 +10,9 @@ import {
   BarChart3,
   RefreshCw,
 } from "lucide-react";
-import Modal from "../components/Modal";
-import ProductForm from "../components/ProductForm";
-import Loader from "../components/Loader";
+import Modal from "../components/form/Modal";
+import ProductForm from "../components/form/ProductForm";
+import Loader from "../components/loading/Loader";
 
 interface Product {
   id: number;

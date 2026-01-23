@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Search, Megaphone, Facebook, MapPin, X } from "lucide-react";
-import MarketingForm from "./../components/MarketingForm";
-import Loader from "../components/Loader";
+import MarketingForm from "../components/form/MarketingForm";
+import Loader from "../components/loading/Loader";
 
 interface Marketing {
   id: number;

@@ -11,7 +11,7 @@ import {
   CheckCircle,
   Clock,
 } from "lucide-react";
-import { Commande } from "../utils/types";
+import { Commande } from "../../utils/types";
 
 export default function OrderModal({
   order,
@@ -22,7 +22,6 @@ export default function OrderModal({
 }) {
   if (!order) return null;
 
-  // Fonction pour obtenir la couleur du statut
   const getStatusColor = (status: string) => {
     switch (status) {
       case "EN_ATTENTE":
@@ -38,7 +37,6 @@ export default function OrderModal({
     }
   };
 
-  // Fonction pour obtenir l'icône du statut
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "EN_ATTENTE":
@@ -54,12 +52,10 @@ export default function OrderModal({
     }
   };
 
-  // Formater le prix
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("fr-FR").format(price) + " Ar";
   };
 
-  // Formater la date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("fr-FR", {
@@ -71,7 +67,6 @@ export default function OrderModal({
     });
   };
 
-  // Calculer le total
   const totalAmount = order.details.reduce(
     (sum, item) => sum + item.prixTotal,
     0

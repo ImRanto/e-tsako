@@ -56,18 +56,15 @@ export default function AdminActivationPage() {
     fetchKeys();
   }, []);
 
-  // Filtrer les clés en fonction de la recherche et du filtre
   useEffect(() => {
     let result = keys;
 
-    // Filtre par statut
     if (statusFilter !== "all") {
       result = result.filter((key) =>
         statusFilter === "used" ? key.used : !key.used
       );
     }
 
-    // Filtre par recherche
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(

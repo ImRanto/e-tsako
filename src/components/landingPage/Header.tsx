@@ -7,7 +7,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthProvider";
+import { useAuth } from "../../context/AuthProvider";
 import { useState, useEffect } from "react";
 
 const app_name = import.meta.env.VITE_APP_NAME;
@@ -130,7 +130,7 @@ export default function Header() {
 
                       <div className="p-1">
                         <Link
-                          to="/dashboard"
+                          to="/login"
                           className="flex items-center gap-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors"
                         >
                           <LayoutDashboard size={16} /> Dashboard

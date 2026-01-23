@@ -1,10 +1,10 @@
 // src/components/QuickActions.tsx
 import { useState, useEffect } from "react";
 import { ShoppingCart, Package, Users } from "lucide-react";
-import StockForm, { StockData } from "./StockForm";
-import CustomerForm from "./CustomerForm";
-import OrderForm from "./OrderForm";
-import { getUserFromToken } from "../utils/auth"; // fonction pour décoder JWT
+import StockForm, { StockData } from "../form/StockForm";
+import CustomerForm from "../form/CustomerForm";
+import OrderForm from "../form/OrderForm";
+import { getUserFromToken } from "../../utils/auth";
 
 export default function QuickActions() {
   const [modalOpen, setModalOpen] = useState<
@@ -13,7 +13,6 @@ export default function QuickActions() {
   const [editingStock, setEditingStock] = useState<StockData | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  // On récupère le rôle depuis le token
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     if (!token) return;

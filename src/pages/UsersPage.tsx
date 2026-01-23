@@ -14,7 +14,7 @@ import {
   RefreshCw,
   AlertCircle,
 } from "lucide-react";
-import Loader from "../components/Loader";
+import Loader from "../components/loading/Loader";
 
 interface User {
   id?: number;

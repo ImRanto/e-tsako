@@ -1,5 +1,4 @@
-// pages/AdminLoginPage.tsx
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import AdminActivationPage from "./AdminActivationPage";
 import {
   Eye,
@@ -27,7 +26,6 @@ export default function AdminLoginPage() {
     setIsLoading(true);
     setError("");
 
-    // Simuler un délai de traitement pour une meilleure UX
     await new Promise((resolve) => setTimeout(resolve, 800));
 
     if (user === ADMIN_USER && password === ADMIN_PASSWORD) {
@@ -39,7 +37,6 @@ export default function AdminLoginPage() {
     setIsLoading(false);
   };
 
-  // Vérifie si le mot de passe est fort (au moins 8 caractères, 1 majuscule, 1 minuscule, 1 chiffre)
   const isPasswordStrong = (pwd: string) => {
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
     return regex.test(pwd);
