@@ -47,7 +47,7 @@ export default function UsersPage() {
     nom: "",
     prenom: "",
     email: "",
-    role: "VENTE",
+    role: "SELLER",
     motDePasse: "",
   });
 
@@ -189,7 +189,7 @@ export default function UsersPage() {
         nom: "",
         prenom: "",
         email: "",
-        role: "VENTE",
+        role: "SELLER",
         motDePasse: "",
       });
       setSuccess(
@@ -217,7 +217,7 @@ export default function UsersPage() {
       nom: "",
       prenom: "",
       email: "",
-      role: "VENTE",
+      role: "SELLER",
       motDePasse: "",
     });
     setIsModalOpen(true);
@@ -230,8 +230,10 @@ export default function UsersPage() {
         return "bg-red-100 text-red-800";
       case "PRODUCTION":
         return "bg-blue-100 text-blue-800";
-      case "VENTE":
+      case "SELLER":
         return "bg-green-100 text-green-800";
+      case "BUYER":
+        return "bg-yellow-100 text-yellow-800";
       case "MARKETING":
         return "bg-purple-100 text-purple-800";
       default:
@@ -245,7 +247,7 @@ export default function UsersPage() {
         return "";
       case "PRODUCTION":
         return "";
-      case "VENTE":
+      case "SELLER":
         return "";
       case "MARKETING":
         return "";
@@ -394,7 +396,8 @@ export default function UsersPage() {
                   <option value="all">Tous les rôles</option>
                   <option value="ADMIN">Administrateur</option>
                   <option value="PRODUCTION">Production</option>
-                  <option value="VENTE">Vente</option>
+                  <option value="SELLER">Vente</option>
+                  <option value="BUYER">Vente</option>
                   <option value="MARKETING">Marketing</option>
                 </select>
                 <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -731,7 +734,8 @@ export default function UsersPage() {
                   >
                     <option value="ADMIN">Administrateur</option>
                     <option value="PRODUCTION">Production</option>
-                    <option value="VENTE">Vente</option>
+                    <option value="SELLER">Vente</option>
+                    <option value="BUYER">Vente</option>
                     <option value="MARKETING">Marketing</option>
                   </select>
                 </div>

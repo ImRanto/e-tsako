@@ -28,19 +28,21 @@ interface User {
   role?: string;
 }
 
-const app_name = import.meta.env.VITE_APP_NAME || "I-TSAKY";
+const app_name = import.meta.env.VITE_APP_NAME;
 const baseUrl = import.meta.env.VITE_API_URL;
 
 const roleIcons = {
   ADMIN: <Settings size={14} className="text-purple-600" />,
-  VENTE: <User size={14} className="text-blue-600" />,
+  SELLER: <User size={14} className="text-blue-600" />,
+  BUYER: <User size={14} className="text-yellow-600" />,
   PRODUCTION: <Building size={14} className="text-green-600" />,
   MARKETING: <Truck size={14} className="text-orange-600" />,
 };
 
 const roleColors = {
   ADMIN: "bg-purple-100 text-purple-800",
-  VENTE: "bg-blue-100 text-blue-800",
+  SELLER: "bg-blue-100 text-blue-800",
+  BUYER: "bg-yellow-100 text-yellow-800",
   PRODUCTION: "bg-green-100 text-green-800",
   MARKETING: "bg-orange-100 text-orange-800",
 };
@@ -54,7 +56,7 @@ export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {
 
   const { user, logout } = useAuth();
 
-  const role = user?.role || "VENTE";
+  const role = user?.role || "SELLER";
   const menuItems = menuByRole[role] || [];
 
   useEffect(() => {

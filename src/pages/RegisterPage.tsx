@@ -66,7 +66,7 @@ export default function RegisterPage({
             prenom,
             email,
             motDePasse: password,
-            role: "CLIENT",
+            role: "BUYER",
           }),
         }
       );

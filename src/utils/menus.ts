@@ -28,7 +28,7 @@ export const menuByRole: Record<string, any[]> = {
     { id: "products", label: "Produits", icon: Package },
     { id: "stock", label: "Stock", icon: Archive },
   ],
-  VENTE: [
+  SELLER: [
     { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
     { id: "orders", label: "Commandes", icon: ShoppingCart },
     { id: "customers", label: "Clients", icon: Users },
@@ -40,7 +40,7 @@ export const menuByRole: Record<string, any[]> = {
     { id: "marketing", label: "Marketing", icon: Megaphone },
     { id: "reports", label: "Rapports", icon: BarChart3 },
   ],
-  CLIENT: [
+  BUYER: [
     { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
     { id: "orders", label: "Commandes", icon: ShoppingCart },
     { id: "customers", label: "Clients", icon: Users },

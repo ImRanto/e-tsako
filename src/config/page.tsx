@@ -20,20 +20,20 @@ export const renderPage = (currentPage: string, role?: string) => {
 
   switch (currentPage) {
     case "dashboard":
-      return userRole === "VENTE" ? <Dashboard /> : <Dashboard />;
+      return userRole === "SELLER" ? <Dashboard /> : <Dashboard />;
 
     case "products":
-      return userRole === "VENTE" ? <ProductsPageVente /> : <ProductsPage />;
+      return userRole === "SELLER" ? <ProductsPageVente /> : <ProductsPage />;
 
     case "customers":
-      return userRole === "VENTE" || userRole === "CLIENT" ? (
+      return userRole === "SELLER" || userRole === "BUYER" ? (
         <ClientPage />
       ) : (
         <ClientPageAdmin />
       );
 
     case "orders":
-      return userRole === "VENTE" ? <OrdersPageVente /> : <OrdersPage />;
+      return userRole === "SELLER" ? <OrdersPageVente /> : <OrdersPage />;
 
     case "users":
       return <UsersPage />;
@@ -54,6 +54,6 @@ export const renderPage = (currentPage: string, role?: string) => {
       return <HistoriquePage />;
 
     default:
-      return userRole === "VENTE" ? <DashboardVentePage /> : <Dashboard />;
+      return userRole === "SELLER" ? <DashboardVentePage /> : <Dashboard />;
   }
 };

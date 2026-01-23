@@ -33,7 +33,7 @@ export default function QuickActions() {
       type: "order",
       icon: ShoppingCart,
       color: "bg-blue-500",
-      roles: ["ADMIN", "VENTE", "PRODUCTION", "MARKETING"],
+      roles: ["ADMIN", "SELLER", "BUYER", "PRODUCTION", "MARKETING"],
     },
     {
       label: "Ajouter produit dans Stock",
