@@ -16,7 +16,7 @@ import { Customer } from "../components/types/customerType";
 
 const baseUrl = import.meta.env.VITE_API_URL;
 
-export default function CustomersPage() {
+export default function ClientPageAdmin() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [searchTerm, setSearchTerm] = useState("");

@@ -14,7 +14,7 @@ import { Customer } from "../components/types/customerType";
 
 const baseUrl = import.meta.env.VITE_API_URL;
 
-export default function VentePage() {
+export default function ClientPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -86,7 +86,7 @@ export default function VentePage() {
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Espace Vente</h1>
+              <h1 className="text-3xl font-bold text-gray-900">Client</h1>
               <p className="text-gray-600 mt-2">
                 Consultez et gérez votre portefeuille clients
               </p>

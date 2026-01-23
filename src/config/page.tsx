@@ -1,8 +1,8 @@
 import Dashboard from "../components/dasboard/Dashboard";
 import ProductsPage from "../pages/ProductsPage";
 import ProductsPageVente from "../pages/ProductPageVente";
-import CustomersPage from "../pages/CustomersPageAdmin";
-import CustomersPageVente from "../pages/CustomersPageVente";
+import ClientPageAdmin from "../pages/ClientPageAdmin";
+import ClientPage from "../pages/ClientPageVente";
 import OrdersPage from "../pages/OrdersPage";
 import OrdersPageVente from "../pages/OrderPageVente";
 import ExpensesPage from "../pages/ExpensesPage";
@@ -26,7 +26,11 @@ export const renderPage = (currentPage: string, role?: string) => {
       return userRole === "VENTE" ? <ProductsPageVente /> : <ProductsPage />;
 
     case "customers":
-      return userRole === "VENTE" ? <CustomersPageVente /> : <CustomersPage />;
+      return userRole === "VENTE" || userRole === "CLIENT" ? (
+        <ClientPage />
+      ) : (
+        <ClientPageAdmin />
+      );
 
     case "orders":
       return userRole === "VENTE" ? <OrdersPageVente /> : <OrdersPage />;
