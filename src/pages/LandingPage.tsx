@@ -25,7 +25,7 @@ export default function LandingPage() {
     };
 
     pingBackend();
-    const interval = setInterval(pingBackend, 0.5 * 60 * 1000); // toutes les 13 min
+    const interval = setInterval(pingBackend, 10 * 60 * 1000); // toutes les 10 min
     return () => clearInterval(interval);
   }, []);
 
