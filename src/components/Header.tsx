@@ -1,15 +1,31 @@
-import { Package, Menu, X, User, LogOut, ChevronDown } from "lucide-react";
+import {
+  Package,
+  Menu,
+  X,
+  LogOut,
+  ChevronDown,
+  LayoutDashboard,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthProvider";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const app_name = import.meta.env.VITE_APP_NAME;
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Effet de scroll pour changer l'apparence
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const navigationLinks = [
     { href: "#home", label: "Accueil" },
@@ -19,227 +35,176 @@ export default function Header() {
   ];
 
   const handleLogout = () => {
-    logout(); // Utilise la fonction de votre contexte
+    logout();
     setIsUserDropdownOpen(false);
     setIsMenuOpen(false);
     navigate("/");
   };
 
-  const getInitials = (name) => {
-    if (!name) return "U";
+  const getInitials = (name: string) => {
     return name
-      .split(" ")
-      .map((part) => part.charAt(0))
+      ?.split(" ")
+      .map((n) => n[0])
       .join("")
       .toUpperCase()
       .slice(0, 2);
   };
 
   return (
-    <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center group">
-            <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center mr-3 shadow-md group-hover:shadow-lg transition-shadow">
-              <Package size={20} className="text-white" />
+    <nav
+      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-white/80 backdrop-blur-md border-b border-slate-200 py-2"
+          : "bg-transparent py-4"
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="flex justify-between items-center h-14">
+          {/* LOGO */}
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg group-hover:bg-amber-500 transition-all duration-300">
+              <Package size={22} className="text-white" />
             </div>
-            <div>
-              <span className="text-xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors">
-                {app_name}
-              </span>
-            </div>
+            <span className="text-xl font-bold tracking-tight text-slate-900">
+              {app_name}
+              <span className="text-amber-500">.</span>
+            </span>
           </Link>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navigationLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="text-gray-600 hover:text-amber-600 transition-colors font-medium text-sm"
-              >
-                {link.label}
-              </a>
-            ))}
+          {/* DESKTOP NAV */}
+          <div className="hidden md:flex items-center gap-8">
+            <div className="flex items-center gap-6">
+              {navigationLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-amber-500 after:transition-all hover:after:w-full"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+
+            <div className="h-6 w-px bg-slate-200 mx-2" />
 
             {user ? (
-              // Utilisateur connecté
+              /* USER CONNECTÉ */
               <div className="relative">
                 <button
                   onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                  className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200"
+                  className="flex items-center gap-3 pl-1 pr-3 py-1 rounded-full bg-slate-50 border border-slate-200 hover:border-amber-300 transition-all"
                 >
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-sm">
-                      {getInitials(user.nom)}
-                    </div>
-                    <div className="text-left">
-                      <p className="text-sm font-medium text-gray-900">
-                        {user.nom?.split(" ")[0] || "Utilisateur"}
-                      </p>
-                      <p className="text-xs text-gray-500 capitalize">
-                        {user.role?.toLowerCase() || "utilisateur"}
-                      </p>
-                    </div>
+                  <div className="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-white text-xs font-bold ring-2 ring-white">
+                    {getInitials(user.nom)}
+                  </div>
+                  <div className="hidden lg:block text-left leading-none">
+                    <p className="text-xs font-bold text-slate-900">
+                      {user.nom?.split(" ")[0]}
+                    </p>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-tighter mt-0.5">
+                      {user.role}
+                    </p>
                   </div>
                   <ChevronDown
-                    size={16}
-                    className={`text-gray-400 transition-transform ${
-                      isUserDropdownOpen ? "rotate-180" : ""
-                    }`}
+                    size={14}
+                    className={`text-slate-400 transition-transform duration-300 ${isUserDropdownOpen ? "rotate-180" : ""}`}
                   />
                 </button>
 
-                {/* Dropdown utilisateur */}
+                {/* DROPDOWN ELEGANTE */}
                 {isUserDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg py-2 z-50 animate-fade-in">
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="text-sm font-semibold text-gray-900 truncate">
-                        {user.nom || "Utilisateur"}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate mt-1">
-                        {user.email || "Non spécifié"}
-                      </p>
-                      <span className="inline-block mt-2 px-2 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded-full capitalize">
-                        {user.role?.toLowerCase() || "utilisateur"}
-                      </span>
-                    </div>
-
-                    <Link
-                      to="/login"
-                      className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  <>
+                    <div
+                      className="fixed inset-0 z-0"
                       onClick={() => setIsUserDropdownOpen(false)}
-                    >
-                      <User size={16} className="mr-3 text-gray-400" />
-                      Tableau de bord
-                    </Link>
+                    />
+                    <div className="absolute right-0 mt-3 w-56 bg-white border border-slate-200 rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+                      <div className="px-4 py-3 border-b border-slate-50">
+                        <p className="text-xs text-slate-400 font-medium">
+                          Connecté en tant que
+                        </p>
+                        <p className="text-sm font-bold text-slate-900 truncate">
+                          {user.email}
+                        </p>
+                      </div>
 
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100 mt-1"
-                    >
-                      <LogOut size={16} className="mr-3" />
-                      Se déconnecter
-                    </button>
-                  </div>
+                      <div className="p-1">
+                        <Link
+                          to="/dashboard"
+                          className="flex items-center gap-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors"
+                        >
+                          <LayoutDashboard size={16} /> Dashboard
+                        </Link>
+                        {/* <Link to="/settings" className="flex items-center gap-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors">
+                          <Settings size={16} /> Paramètres
+                        </Link> */}
+                      </div>
+
+                      <div className="p-1 border-t border-slate-50 mt-1">
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center gap-3 w-full px-3 py-2 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <LogOut size={16} /> Déconnexion
+                        </button>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
             ) : (
-              // Utilisateur non connecté
-              <div className="flex items-center space-x-4">
-                <Link to="/login">
-                  <button className="text-gray-600 hover:text-amber-600 transition-colors font-medium text-sm border-2 rounded-lg border-amber-600 p-1">
-                    Se connecter
-                  </button>
-                </Link>
-              </div>
+              /* NON CONNECTÉ */
+              <Link to="/login">
+                <button className="bg-slate-900 text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-amber-600 hover:shadow-lg hover:shadow-amber-200 transition-all active:scale-95">
+                  Se connecter
+                </button>
+              </Link>
             )}
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* MOBILE BUTTON */}
           <button
-            className="md:hidden p-2 rounded-lg hover:bg-gray-50 transition-colors"
+            className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
-
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-200 animate-slide-down">
-            <div className="px-4 py-4 space-y-4">
-              {navigationLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="block py-2 text-gray-600 hover:text-amber-600 transition-colors font-medium"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {link.label}
-                </a>
-              ))}
-
-              {user ? (
-                // Mobile - Utilisateur connecté
-                <div className="pt-4 border-t border-gray-200">
-                  <div className="flex items-center space-x-3 mb-4 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold shadow-sm">
-                      {getInitials(user.nom)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">
-                        {user.nom || "Utilisateur"}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {user.email || "Non spécifié"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <Link
-                    to="/login"
-                    className="flex items-center w-full py-3 text-gray-700 border-t border-gray-100"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <User size={18} className="mr-3 text-gray-400" />
-                    Tableau de bord
-                  </Link>
-
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center w-full py-3 text-red-600 border-t border-gray-100"
-                  >
-                    <LogOut size={18} className="mr-3" />
-                    Se déconnecter
-                  </button>
-                </div>
-              ) : (
-                // Mobile - Utilisateur non connecté
-                <div className="pt-4 border-t border-gray-200 space-y-3">
-                  <Link to="/login" className="block w-full">
-                    <button
-                      className="w-full py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors border-2 rounded-lg border-amber-600 p-1"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Se connecter
-                    </button>
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Overlay pour dropdown desktop */}
-      {isUserDropdownOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsUserDropdownOpen(false)}
-        />
+      {/* MOBILE MENU */}
+      {isMenuOpen && (
+        <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-200 shadow-xl p-6 space-y-6 animate-in slide-in-from-top-4 duration-300">
+          <div className="space-y-4">
+            {navigationLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="block text-lg font-medium text-slate-600"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
+          <div className="pt-6 border-t border-slate-100">
+            {user ? (
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-2 p-4 bg-red-50 text-red-600 rounded-2xl font-bold"
+              >
+                <LogOut size={20} /> Déconnexion
+              </button>
+            ) : (
+              <Link to="/login" onClick={() => setIsMenuOpen(false)}>
+                <button className="w-full p-4 bg-slate-900 text-white rounded-2xl font-bold">
+                  Se connecter
+                </button>
+              </Link>
+            )}
+          </div>
+        </div>
       )}
-
-      {/* Styles d'animation */}
-      <style>
-        {`
-          @keyframes fade-in {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          @keyframes slide-down {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          .animate-fade-in {
-            animation: fade-in 0.2s ease-out;
-          }
-          .animate-slide-down {
-            animation: slide-down 0.3s ease-out;
-          }
-        `}
-      </style>
     </nav>
   );
 }

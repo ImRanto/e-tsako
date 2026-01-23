@@ -5,6 +5,7 @@ import {
   Shield,
   Zap,
   BarChart3,
+  ChevronRight,
 } from "lucide-react";
 
 export default function Features() {
@@ -12,50 +13,60 @@ export default function Features() {
     {
       icon: Package,
       title: "Gestion des Produits",
-      description:
-        "Gérez facilement votre catalogue de chips et snacks avec suivi des stocks en temps réel.",
+      description: "Optimisez votre catalogue et suivez vos stocks de snacks en temps réel avec une précision chirurgicale.",
+      color: "from-amber-500 to-orange-500",
     },
     {
       icon: Users,
       title: "Clients & Commandes",
-      description:
-        "Suivez vos clients épiceries et particuliers avec un système de commandes intuitif.",
+      description: "Centralisez vos relations B2B et particuliers. Un flux de commande fluide pour une satisfaction maximale.",
+      color: "from-blue-500 to-cyan-500",
     },
     {
       icon: TrendingUp,
       title: "Analyses Avancées",
-      description:
-        "Rapports détaillés hebdomadaires, mensuels et annuels pour optimiser vos ventes.",
+      description: "Transformez vos données en décisions grâce à des rapports prédictifs hebdomadaires et annuels.",
+      color: "from-emerald-500 to-teal-500",
     },
     {
       icon: BarChart3,
       title: "Tableau de Bord",
-      description:
-        "Vue d'ensemble complète de votre activité avec métriques en temps réel.",
+      description: "Une tour de contrôle intuitive pour piloter chaque aspect de votre business en un coup d'œil.",
+      color: "from-purple-500 to-indigo-500",
     },
     {
       icon: Shield,
-      title: "Sécurisé & Fiable",
-      description:
-        "Données protégées avec sauvegarde automatique et accès sécurisé.",
+      title: "Sécurité",
+      description: "Vos données sont cryptées et sauvegardées automatiquement sur nos serveurs haute disponibilité.",
+      color: "from-slate-700 to-slate-900",
     },
     {
       icon: Zap,
-      title: "Interface Moderne",
-      description: "Design responsive et intuitif adapté à tous vos appareils.",
+      title: "Performance Cloud",
+      description: "Une interface ultra-rapide, pensée pour la mobilité et une réactivité sans compromis sur tout support.",
+      color: "from-rose-500 to-orange-500",
     },
   ];
 
   return (
-    <section id="features" className="py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-            Tout ce dont vous avez besoin pour réussir
+    <section id="features" className="py-24 bg-[#fafafa] relative overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute top-0 left-0 w-full h-full opacity-40 pointer-events-none">
+        <div className="absolute top-24 left-[10%] w-64 h-64 bg-amber-200/30 blur-[100px] rounded-full" />
+        <div className="absolute bottom-24 right-[10%] w-64 h-64 bg-blue-200/20 blur-[100px] rounded-full" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+        <div className="text-center mb-20">
+          <h2 className="text-sm font-black uppercase tracking-[0.3em] text-amber-600 mb-4">
+            Puissance & Simplicité
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Notre plateforme offre tous les outils nécessaires pour gérer
-            efficacement tous concerne sur la vente
+          <h3 className="text-4xl lg:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">
+            Tout pour piloter votre <span className="text-slate-400 font-light italic">croissance.</span>
+          </h3>
+          <p className="text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
+            Plus qu'un simple logiciel, une solution complète conçue pour automatiser 
+            vos flux de vente et libérer votre potentiel commercial.
           </p>
         </div>
 
@@ -65,17 +76,29 @@ export default function Features() {
             return (
               <div
                 key={index}
-                className="bg-white rounded-xl p-8 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-amber-200 group"
+                className="group relative bg-white rounded-[32px] p-8 transition-all duration-500 border border-slate-100 hover:border-white shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_60px_-20px_rgba(0,0,0,0.1)] hover:-translate-y-2 overflow-hidden"
               >
-                <div className="bg-amber-100 w-12 h-12 rounded-lg flex items-center justify-center mb-6 group-hover:bg-amber-200 transition-colors">
-                  <Icon size={24} className="text-amber-600" />
+                {/* Hover Gradient Overlay */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-500`} />
+                
+                <div className="relative z-10">
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-8 shadow-lg shadow-amber-500/20 transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500`}>
+                    <Icon size={28} className="text-white" />
+                  </div>
+
+                  <h4 className="text-xl font-bold text-slate-900 mb-4 group-hover:text-amber-600 transition-colors">
+                    {feature.title}
+                  </h4>
+                  
+                  <p className="text-slate-500 leading-relaxed text-sm mb-6">
+                    {feature.description}
+                  </p>
+
+                  <div className="flex items-center text-xs font-bold text-slate-400 group-hover:text-slate-900 transition-colors cursor-pointer">
+                    EN SAVOIR PLUS 
+                    <ChevronRight size={14} className="ml-1 transform group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-600 leading-relaxed">
-                  {feature.description}
-                </p>
               </div>
             );
           })}
